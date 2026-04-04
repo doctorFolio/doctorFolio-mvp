@@ -24,7 +24,7 @@ function buildDriftProblems(
   total: number,
 ): Problem[] {
   const problems: Problem[] = []
-  const assetClasses: AssetClass[] = ['국내주식', '해외주식', '채권']
+  const assetClasses: Array<keyof TargetAllocation> = ['국내주식', '해외주식', '채권']
 
   for (const ac of assetClasses) {
     const currentPct = pct(current[ac], total)
@@ -112,7 +112,7 @@ function buildActions(
 ): Action[] {
   const actions: Action[] = []
 
-  for (const ac of ['국내주식', '해외주식', '채권'] as AssetClass[]) {
+  for (const ac of ['국내주식', '해외주식', '채권'] as Array<keyof TargetAllocation>) {
     const currentPct = pct(current[ac], total)
     const targetPct = target[ac]
     const diff = currentPct - targetPct
