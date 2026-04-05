@@ -41,7 +41,13 @@ jobs:
                   break
               except urllib.error.HTTPError as e:
                   if e.code == 429 and attempt < 2:
-                      time.sleep(30 * (attempt + 1))
+                      retry_after = e.headers.get('Retry-After')
+                      wait = int(retry_after) if retry_after and retry_after.isdigit() else 30 * (attempt + 1)
+                      print(f'Rate limited (429). Waiting {wait}s before retry {attempt + 2}/3...')
+                      time.sleep(wait)
+                  elif e.code == 429:
+                      print('All retries exhausted (429). Writing fallback message.')
+                      open('/tmp/review.md', 'w').write('> **Gemini 코드 리뷰를 일시적으로 사용할 수 없습니다.**\n>\n> Gemini API 요청 한도(429)에 도달했습니다. 잠시 후 PR을 닫았다가 다시 열거나, 수동으로 리뷰를 요청해 주세요.')
                   else:
                       raise
           "
