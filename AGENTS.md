@@ -9,36 +9,39 @@ For any non-trivial code change, follow this order:
 4. Refactor: improve structure only after tests pass.
 5. Review: require an independent reviewer before git management or completion.
 
-## Default Codex Boundary
+## Agent Division of Labor
 
-Unless the user explicitly overrides this, Codex is responsible only for:
+### Claude (primary implementer)
+Claude owns the full implementation pipeline:
 1. planning
 2. implementation
 3. refactoring
 4. tests and verification
+5. self-review (1차)
 
-After tests/verification pass, Codex must stop and hand off.
+After `pnpm verify` passes and self-review is done, Claude requests a Codex independent review.
 
-Codex must **not** do the following by default:
-- final review
-- PR review
-- PR creation / publish / ship
-- merge or release steps
+Claude also owns:
+- Codex 피드백 반영 및 수정
+- PR 생성 / ship / merge
 
-Those steps are owned by **Claude** unless the user explicitly asks Codex to do them.
+### Codex (independent reviewer)
+Codex is used exclusively as a **second-opinion reviewer** after Claude completes implementation.
 
-Required Codex handoff after implementation/test completion:
-- Plan
-- Files Changed
-- Commands Run
-- Test Results
-- Remaining Risks
-- `Claude Handoff` section with:
-  - Scope
-  - Changed files
-  - Verification completed
-  - Known risks
-  - Suggested review focus
+Run via `/codex review` (pass/fail gate) or `/codex challenge` (adversarial — tries to break the code).
+
+Codex must **not**:
+- implement features
+- make code changes
+- create PRs or commits
+
+Codex review output is handed back to Claude for triage and fixes.
+
+Required Codex review output:
+- Pass/fail gate verdict
+- P1 blockers (must fix before merge)
+- P2 suggestions (optional improvements)
+- Cross-model findings vs Claude's own review
 
 Definition of done:
 - `pnpm verify` passes
@@ -60,24 +63,25 @@ Rules:
 
 ## Role Lanes
 
-- **Planner:** writes the short plan, names files to inspect, and lists required test updates before code changes begin.
-- **Implementer:** makes the smallest viable code change that satisfies the plan and hands off without doing final review.
-- **Tester:** adds or updates tests, runs `pnpm verify`, and reports exact failures if verification breaks.
-- **Reviewer:** performs findings-first review, flags missing tests as `P1`, and calls out hidden side effects, risky refactors, security regressions, and auth coverage gaps. Default owner: Claude.
-- **Git Manager:** handles branch, staging, commit, push, and PR hygiene only after review is clean. Default owner: Claude.
+- **Planner:** writes the short plan, names files to inspect, and lists required test updates before code changes begin. Owner: **Claude**.
+- **Implementer:** makes the smallest viable code change that satisfies the plan and hands off without doing final review. Owner: **Claude**.
+- **Tester:** adds or updates tests, runs `pnpm verify`, and reports exact failures if verification breaks. Owner: **Claude**.
+- **Reviewer (1차):** performs self-review, flags obvious issues before Codex review. Owner: **Claude**.
+- **Reviewer (2차):** independent second-opinion review via `/codex review` or `/codex challenge`. Owner: **Codex**.
+- **Git Manager:** handles branch, staging, commit, push, and PR hygiene only after Codex review is clean. Owner: **Claude**.
 
 ## Role Execution Order
 
 For any non-trivial change, route work through:
 
-`planner -> implementer -> tester -> reviewer -> git-manager`
+`planner → implementer → tester → reviewer(Claude) → reviewer(Codex) → git-manager`
 
 Additional rules:
-- Review is required after tests and before git management.
-- If review finds issues, return to implementer, then tester, then run review again.
-- Use the role prompts in `prompts/` for these lanes when delegating to separate agents.
-- By default, Codex executes only through `tester` and then stops with a Claude handoff.
-- `reviewer` and `git-manager` lanes are reserved for Claude unless the user explicitly assigns them to Codex.
+- Claude self-review comes before Codex review. Fix obvious issues first.
+- Codex review is required after Claude self-review and before git management.
+- If Codex finds P1 issues, return to implementer → tester → Claude self-review → Codex review again.
+- Use the role prompts in `prompts/` for these lanes when delegating.
+- `git-manager` lane is always Claude.
 
 ## Role Prompt Files
 
@@ -178,15 +182,24 @@ Refactor when:
 - A component has 3+ separate responsibilities
 
 ## [Review Mandate]
-Final review is owned by Claude by default.
 
-Codex should perform the review table below **only if the user explicitly asks Codex to review**.
-1. **Maintainer**: Check for architecture & Tidy First compliance.
-2. **Security Officer**: Check for data safety & financial integrity.
-3. **Performance Engineer**: Check for query optimization & resource usage.
-4. **QA Engineer**: Check for test coverage & edge cases.
+### Claude 1차 리뷰 (self-review)
+Claude가 구현 후 스스로 점검하는 항목:
+1. **Tidy First 준수**: structural/behavioral 변경 분리 여부
+2. **테스트 커버리지**: 변경된 로직에 대한 테스트 존재 여부
+3. **타입 안전성**: `any` 사용 여부, 타입 추론 적절성
+4. **보안**: API route 입력 검증, 인증 처리
 
-When Codex is not explicitly assigned review, stop after verification and provide a Claude handoff instead of a review verdict.
+### Codex 2차 리뷰 (independent review)
+Claude 1차 리뷰 통과 후 `/codex review` 또는 `/codex challenge` 실행.
+
+Codex 리뷰 관점:
+1. **Maintainer**: architecture & Tidy First compliance
+2. **Security Officer**: data safety & financial integrity
+3. **Performance Engineer**: query optimization & resource usage
+4. **QA Engineer**: test coverage & edge cases
+
+P1 (blocker) 발견 시 Claude가 수정 후 재검토. P2는 Claude 판단으로 반영 여부 결정.
 
 ## Deploy Configuration
 
