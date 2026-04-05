@@ -1,0 +1,80 @@
+name: Gemini PR Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  gemini-review:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get PR diff
+        run: |
+          git fetch origin ${{ github.base_ref }}
+          git diff origin/${{ github.base_ref }}...HEAD > /tmp/pr.diff
+          echo "Diff: $(wc -l < /tmp/pr.diff) lines"
+
+      - name: Gemini review
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          python3 << 'PYEOF'
+          import json, urllib.request, os, sys
+
+          diff = open("/tmp/pr.diff").read()[:40000]  # ~40k chars 제한
+
+          prompt = f"""You are a code reviewer for a Next.js 15 TypeScript portfolio analysis app.
+
+Review this pull request diff. Focus on:
+1. TypeScript safety (no `any`, proper types)
+2. React/Next.js best practices (App Router patterns)
+3. Security issues in API routes (input validation, injection risks)
+4. Test coverage gaps for new logic
+5. Code clarity and single responsibility
+
+Be concise. Use bullet points. Flag blockers (must fix) vs suggestions (optional).
+
+Diff:
+```
+{diff}
+```"""
+
+          payload = json.dumps({
+            "contents": [{"parts": [{"text": prompt}]}],
+            "generationConfig": {"maxOutputTokens": 1024}
+          }).encode()
+
+          req = urllib.request.Request(
+            f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={os.environ['GEMINI_API_KEY']}",
+            data=payload,
+            headers={"Content-Type": "application/json"}
+          )
+
+          with urllib.request.urlopen(req, timeout=30) as resp:
+            data = json.loads(resp.read())
+
+          review = data["candidates"][0]["content"]["parts"][0]["text"]
+          open("/tmp/review.md", "w").write(review)
+          print(review)
+          PYEOF
+
+      - name: Post review comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const review = fs.readFileSync('/tmp/review.md', 'utf8');
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `## Gemini Code Review\n\n${review}\n\n---\n*Gemini 2.0 Flash*`
+            });
