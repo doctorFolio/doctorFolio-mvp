@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { ProblemCard } from '@/components/ProblemCard'
 import { AllocationBar } from '@/components/AllocationBar'
 import { ActionItem } from '@/components/ActionItem'
+import { DIAGNOSIS_DISCLAIMER_LINES } from '@/lib/disclaimers'
 import { SESSION_KEYS, DEFAULT_TARGET } from '@/lib/types'
 import type { DiagnosisResult } from '@/lib/types'
 import styles from './page.module.css'
@@ -85,7 +86,6 @@ export default function DiagnosisPage() {
             <div className={styles.actionCard}>
               {diagnosis.actions.map((a, i) => <ActionItem key={i} action={a} />)}
             </div>
-            <p className={styles.fineline}>현재가는 캡처 시점 기준입니다. 실제 주문 시 시세를 다시 확인해주세요.</p>
           </>
         )}
 
@@ -110,10 +110,11 @@ export default function DiagnosisPage() {
           </div>
         )}
 
-        <p className={styles.disclaimer}>
-          이 서비스는 투자자문업 등록 서비스가 아닙니다.<br />
-          최종 투자 결정은 본인 책임입니다.
-        </p>
+        <div className={styles.disclaimer} aria-label="진단 결과 유의사항">
+          {DIAGNOSIS_DISCLAIMER_LINES.map(line => (
+            <p key={line}>{line}</p>
+          ))}
+        </div>
 
         <button className={styles.resetBtn} onClick={() => router.push('/')}>
           ↩ 다시 진단하기
