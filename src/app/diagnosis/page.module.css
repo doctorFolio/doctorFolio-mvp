@@ -45,8 +45,6 @@
   overflow: hidden;
 }
 
-.fineline { font-size: 11px; color: var(--text-3); line-height: 1.55; padding: 2px 4px; }
-
 .explainBtn {
   width: 100%;
   background: var(--surface);
@@ -80,7 +78,18 @@
 .explainBody p + p { margin-top: 12px; }
 .explainBody button { background: none; border: none; color: var(--navy); text-decoration: underline; font-size: 13px; }
 
-.disclaimer { font-size: 11px; color: var(--text-3); text-align: center; line-height: 1.6; padding: 8px 4px; }
+.disclaimer {
+  background: rgba(15, 23, 42, 0.04);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  font-size: 11px;
+  color: var(--text-3);
+  text-align: center;
+  line-height: 1.6;
+  padding: 12px 14px;
+}
+
+.disclaimer p + p { margin-top: 4px; }
 
 .resetBtn {
   width: 100%;
