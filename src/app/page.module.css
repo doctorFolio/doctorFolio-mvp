@@ -96,6 +96,11 @@
   gap: 12px;
   padding: 13px 0;
   border-bottom: 1px solid var(--border);
+  animation: stepIn 0.25s ease forwards;
+}
+@keyframes stepIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 .stepVisible { opacity: 1; }
 
@@ -110,7 +115,7 @@
   flex-shrink: 0;
 }
 .done { background: var(--green); border-color: var(--green); }
-.spinning { border-color: var(--navy-mid); animation: spin 0.7s linear infinite; }
+.spinning { border-color: var(--amber); border-top-color: transparent; animation: spin 0.7s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 .stepName { font-size: 14px; font-weight: 500; }
