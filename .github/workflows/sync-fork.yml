@@ -1,0 +1,31 @@
+name: Sync fork for Vercel
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  sync-fork:
+    if: github.repository == 'doctorFolio/doctorFolio-mvp'
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Push main to personal fork
+        env:
+          FORK_PUSH_TOKEN: ${{ secrets.FORK_PUSH_TOKEN }}
+        run: |
+          if [ -z "$FORK_PUSH_TOKEN" ]; then
+            echo "FORK_PUSH_TOKEN is required to push to the Vercel mirror fork." >&2
+            exit 1
+          fi
+
+          git remote add fork "https://x-access-token:${FORK_PUSH_TOKEN}@github.com/ksah3756/doctorFolio-mvp.git"
+          git push --force fork HEAD:main
