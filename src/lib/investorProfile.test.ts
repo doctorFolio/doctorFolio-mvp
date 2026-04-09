@@ -27,20 +27,16 @@ describe('inferStyleKey', () => {
     expect(inferStyleKey([pos('국내주식', 0), pos('채권', 0)])).toBe('balanced')
   })
 
-  it('채권 50% → stable', () => {
-    expect(inferStyleKey([pos('채권', 50), pos('국내주식', 50)])).toBe('stable')
+  it('채권 50% → balanced (임계값 초과 아님)', () => {
+    expect(inferStyleKey([pos('채권', 50), pos('국내주식', 50)])).toBe('balanced')
   })
 
   it('채권 70% → stable', () => {
     expect(inferStyleKey([pos('채권', 70), pos('국내주식', 30)])).toBe('stable')
   })
 
-  it('주식 90%+, 해외 40%+ → aggressive', () => {
+  it('주식 90%+ → aggressive', () => {
     expect(inferStyleKey([pos('해외주식', 50), pos('국내주식', 45), pos('채권', 5)])).toBe('aggressive')
-  })
-
-  it('주식 90%+, 해외 30% → growth (해외 비중 부족)', () => {
-    expect(inferStyleKey([pos('국내주식', 60), pos('해외주식', 30), pos('채권', 10)])).toBe('growth')
   })
 
   it('주식 70% → growth', () => {
@@ -49,6 +45,26 @@ describe('inferStyleKey', () => {
 
   it('주식 50%, 채권 30% → balanced', () => {
     expect(inferStyleKey([pos('국내주식', 30), pos('해외주식', 20), pos('채권', 30), pos('기타', 20)])).toBe('balanced')
+  })
+
+  it('기타 비중이 높아도 주식/채권 비율로 판단', () => {
+    // 주식 40%, 채권 20%, 기타 40% → balanced
+    expect(inferStyleKey([pos('국내주식', 40), pos('채권', 20), pos('기타', 40)])).toBe('balanced')
+  })
+})
+
+describe('PRESETS round-trip', () => {
+  it('각 프리셋 target 배분이 자기 자신 StyleKey로 추론된다', () => {
+    const keys = ['stable', 'balanced', 'growth', 'aggressive'] as const
+    for (const key of keys) {
+      const t = PRESETS[key].target
+      const positions = [
+        pos('국내주식', t['국내주식']),
+        pos('해외주식', t['해외주식']),
+        pos('채권', t['채권']),
+      ]
+      expect(inferStyleKey(positions), `${key} round-trip`).toBe(key)
+    }
   })
 })
 

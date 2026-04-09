@@ -55,8 +55,13 @@ export function inferStyleKey(positions: PortfolioPosition[]): StyleKey {
   const foreignPct = foreignValue / total
   const stockPct = stockValue / total
 
-  if (bondPct >= 0.5) return 'stable'
-  if (stockPct >= 0.9 && foreignPct >= 0.4) return 'aggressive'
-  if (stockPct >= 0.7) return 'growth'
+  // 임계값은 각 프리셋 target이 자기 자신으로 round-trip되도록 설정
+  // stable(20/10/70): bond>60% → stable
+  // balanced(30/20/50): bond=50% → balanced
+  // growth(40/30/30): stock=70% → growth
+  // aggressive(55/35/10): stock=90% → aggressive
+  if (bondPct > 0.6) return 'stable'
+  if (stockPct >= 0.85) return 'aggressive'
+  if (stockPct >= 0.65) return 'growth'
   return 'balanced'
 }
