@@ -27,34 +27,7 @@ Rules:
 
 **GitHub Issues = 작업 백로그의 단일 진실 공급원.** 모든 작업은 이슈로 먼저 등록한 뒤 구현을 시작한다.
 
-### 새 작업 시작
-
-```bash
-gh issue create --title "기능명" --body "수용 기준:\n- ..."
-# → Issue #N 생성
-git fetch origin main
-git branch feat/N-slug origin/main
-git worktree add ../worktrees/feat-N-slug feat/N-slug
-cd ../worktrees/feat-N-slug
-omc team 1:codex "<이슈 제목 + 수용 기준 전문>"
-```
-
-네이밍: `feat/<issue>-<slug>` / `fix/<issue>-<slug>` / `refactor/<issue>-<slug>`
-
-### 활성 작업 확인
-
-```bash
-gh issue list        # 전체 백로그
-git worktree list    # 활성 worktree
-```
-
-### PR 머지 후 정리
-
-```bash
-git worktree remove ../worktrees/feat-N-slug
-git branch -d feat/N-slug
-gh issue close N
-```
+새 작업 시작 / 활성 작업 확인 / PR 머지 후 정리는 `worktree-workflow` 스킬 참고.
 
 ### Review Handoff (REVIEW-N.md 컨벤션)
 
