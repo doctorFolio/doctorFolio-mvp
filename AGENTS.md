@@ -68,27 +68,6 @@ gh issue close N
 
 ### Review Handoff (REVIEW-N.md 컨벤션)
 
-**완료 신호:** `pnpm verify` 통과 → `git commit` → `discord-review-notify` 스크립트로 task 완료 + Discord 리뷰 요청
-
-**리뷰 요청 웹훅 호출 플로우 (Codex worker 성공 종료 경로):**
-1. 워커 시작 직후 `omc team api claim-task ... --json` 실행 후 `claim_token`을 저장한다.
-2. 구현/수정 작업을 끝내고 `pnpm verify` 또는 fallback verify를 통과시킨다.
-3. 필요한 경우 `REVIEW-N.md`의 `## Implementer Response`를 갱신하고 커밋한다.
-4. 성공 종료는 raw `transition-task-status ... to=completed`를 직접 치지 말고 아래 스크립트로 처리한다.
-```bash
-bash ~/.codex/skills/discord-review-notify/scripts/complete-task-and-notify-discord-review.sh \
-  --team-name "<team_name>" \
-  --task-id "<task_id>" \
-  --claim-token "<claim_token>"
-```
-5. 위 스크립트가 `in_progress -> completed` 전이와 Discord webhook 멘션 전송을 함께 처리한다.
-6. 실패 시에만 raw `omc team api transition-task-status ... to=failed`를 사용한다.
-
-**환경 변수 전제:**
-- `DISCORD_WEBHOOK_URL`
-- `DISCORD_MENTION_USER_ID` 또는 `DISCORD_MENTION_ROLE_ID`
-- 위 값은 worker shell에서 바로 읽혀야 하며, OMC notifier 설정과 별개로 스크립트가 직접 사용한다.
-
 **리뷰어 작성 형식** (`REVIEW-1.md` → `REVIEW-2.md` 순서로 워크트리 루트에 작성):
 ```
 ---
