@@ -41,7 +41,7 @@ export function autoClassify(
   }
 
   if (code && /^[A-Z]{1,5}$/.test(code)) {
-    return { sector: '기타', assetClass: '해외주식' }
+    return { sector: '미국주식', assetClass: '해외주식' }
   }
 
   if (ETF_PREFIX_RE.test(name.trim())) {

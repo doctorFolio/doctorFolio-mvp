@@ -18,7 +18,7 @@ describe('autoClassify', () => {
 
   it('treats alphabetic tickers as overseas stocks', () => {
     expect(autoClassify('Apple', 'AAPL')).toEqual({
-      sector: '기타',
+      sector: '미국주식',
       assetClass: '해외주식',
     })
   })
