@@ -29,55 +29,7 @@ Rules:
 
 새 작업 시작 / 활성 작업 확인 / PR 머지 후 정리는 `worktree-workflow` 스킬 참고.
 
-### Review Handoff (REVIEW-N.md 컨벤션)
-
-**리뷰어 작성 형식** (`REVIEW-1.md` → `REVIEW-2.md` 순서로 워크트리 루트에 작성):
-```
----
-cycle: 1
-branch: feat/N-slug
-status: NEEDS_REVISION  # NEEDS_REVISION | APPROVED | ESCALATED
-p1_count: 2
-p2_count: 1
----
-
-## P1 (must fix)
-- [ ] ...
-
-## P2 (optional)
-- [ ] ...
-
-## Implementer Response
-<!-- 구현 담당자가 리뷰 반영 후 이 섹션 채움 -->
-
-## Verdict: REVISE
-```
-
-**Discord 웹훅 → 자동 리뷰 → Codex 재구현 플로우:**
-
-Codex가 구현 완료 시 Discord 웹훅으로 Claude에게 알림:
-```
-Branch: feat/N-slug
-Commit: <sha>
-Repo: /path/to/worktrees/feat-N-slug
-Review file: REVIEW-1.md
-```
-
-Claude는 웹훅 수신 시 자동으로:
-1. 브랜치 diff 분석 + `pnpm verify` 실행
-2. `REVIEW-{N}.md` 작성 (worktree 루트)
-3. **p1_count > 0** → Codex 재구현 자동 트리거:
-```bash
-omc team 1:codex "Read REVIEW-{N}.md. Fix all unchecked P1 items. Run pnpm verify. If verify fails append failure output under '## Implementer Response' and note VERIFY_FAILED — do not commit. If passes, append what you fixed, commit, then use the discord-review-notify skill/script to complete the task and send the Claude review webhook mention. Do not call raw completed transition separately."
-```
-4. **p1_count = 0 (APPROVED)** → Git Manager 모드로 PR 생성
-
-**규칙:**
-- 리뷰 담당자(Claude)는 채팅만으로 끝내지 말고 worktree 루트의 `REVIEW-N.md`에 결과를 남긴다.
-- YAML `status` + `## Verdict` 는 Claude가 작성한다.
-- 구현 담당자(Codex)는 `## Implementer Response` 섹션만 갱신한다.
-- 3사이클 후에도 P1 남으면 `status: ESCALATED` → 유저에게 에스컬레이션
-- `REVIEW*.md`는 `.gitignore` 적용 (PR diff에 포함되지 않음)
+Discord 웹훅 수신 → 리뷰 → REVIEW-N.md 작성 → Codex 재트리거 절차는 `review-handoff` 스킬 참고.
 
 ### 파일 충돌 방지
 
