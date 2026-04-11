@@ -134,7 +134,6 @@ omc team 1:codex "Read REVIEW-{N}.md. Fix all unchecked P1 items. Run pnpm verif
 - 리뷰 담당자(Claude)는 채팅만으로 끝내지 말고 worktree 루트의 `REVIEW-N.md`에 결과를 남긴다.
 - YAML `status` + `## Verdict` 는 Claude가 작성한다.
 - 구현 담당자(Codex)는 `## Implementer Response` 섹션만 갱신한다.
-- Codex worker가 Claude 리뷰 요청이 필요한 성공 종료를 할 때는 `~/.codex/skills/discord-review-notify/scripts/complete-task-and-notify-discord-review.sh` 또는 동일 스킬 경로를 사용한다.
 - 3사이클 후에도 P1 남으면 `status: ESCALATED` → 유저에게 에스컬레이션
 - `REVIEW*.md`는 `.gitignore` 적용 (PR diff에 포함되지 않음)
 
@@ -203,7 +202,7 @@ P1(blocker) → Codex가 수정 후 재검토. P2 → Claude 판단으로 반영
 
 - Platform: Vercel / auto-deploy on push to `main`
 - Production URL: (Vercel 프로젝트 생성 후 기입)
-- Pre-merge: `bun run verify`
+- Pre-merge: `pnpm verify`
 
 환경변수 (Vercel 대시보드):
 - `ANTHROPIC_API_KEY` — Production + Preview 필수
