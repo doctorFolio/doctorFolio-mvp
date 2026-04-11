@@ -16,30 +16,21 @@ Rules:
 
 | Role | Owner | Description |
 |------|-------|-------------|
-| Decomposer | Claude | 파일 겹침 없는 독립 서브태스크로 분리, Track A/B 배분 |
-| Implementer (Track A) | Claude | 구현 → `pnpm verify` → Codex 리뷰 요청 |
-| Implementer (Track B) | Codex | 구현 → `pnpm verify` → `discord-review-notify`로 완료+Claude 리뷰 요청 |
-| Reviewer (Track A) | Codex | `/codex review` 또는 `/codex challenge` |
-| Reviewer (Track B) | Claude | Codex 구현물 검토 |
-| Git Manager | Claude | 리뷰 통과 후 PR 생성 및 머지. 항상 Claude. |
+| Planner | Claude | 이슈 생성 및 수용 기준 작성 |
+| Implementer | Codex | 구현 → `pnpm verify` → `discord-review-notify`로 완료+Claude 리뷰 요청 |
+| Reviewer | Claude | Codex 구현물 검토 → REVIEW-N.md 작성 → P1 있으면 Codex 재트리거 |
+| Git Manager | Claude | APPROVED 후 PR 생성 및 머지 |
 
-**단일 트랙 (작은 작업):**
+**표준 플로우:**
 ```
-Claude 구현 → pnpm verify → /codex review → 수정 → PR
-```
-
-**병렬 트랙 (큰 작업, 파일 겹침 없을 때):**
-```
-Decomposer(Claude)
-    ├── Track A: Claude 구현 → pnpm verify → Codex 리뷰 → 수정
-    └── Track B: Codex 구현 → pnpm verify → `discord-review-notify`로 Claude 리뷰 요청 → 수정
-                    ↓ (양쪽 완료 후)
-              Git Manager(Claude) → PR
+Claude(이슈 작성)
+    → Codex(구현 → pnpm verify → discord-review-notify)
+    → Claude(리뷰 → REVIEW-N.md)
+        ├── P1 있음 → omc team 1:codex "Read REVIEW-N.md..." → 반복
+        └── P1 없음 → PR 생성
 ```
 
-- P1 발견 시 해당 트랙 구현자가 수정 후 재검토.
-- Track B 시작: `omc team 1:codex "..."` (tmux worktree에서 실행)
-- Role prompts: `prompts/planner.md`, `prompts/implementer.md`, `prompts/tester.md`, `prompts/reviewer.md`, `prompts/git-manager.md`
+- Codex 시작: `omc team 1:codex "..."` (worktree에서 실행)
 - Codex worker 성공 종료 시 raw `transition-task-status ... to=completed` 대신 `discord-review-notify` 스크립트로 완료 전이와 Discord review 요청을 한 번에 처리한다. 실패 시에만 raw `to=failed` 전이를 사용한다.
 
 ## Work Unit & Worktree Workflow
@@ -54,6 +45,8 @@ gh issue create --title "기능명" --body "수용 기준:\n- ..."
 git fetch origin main
 git branch feat/N-slug origin/main
 git worktree add ../worktrees/feat-N-slug feat/N-slug
+cd ../worktrees/feat-N-slug
+omc team 1:codex "<이슈 제목 + 수용 기준 전문>"
 ```
 
 네이밍: `feat/<issue>-<slug>` / `fix/<issue>-<slug>` / `refactor/<issue>-<slug>`
@@ -72,23 +65,6 @@ git worktree remove ../worktrees/feat-N-slug
 git branch -d feat/N-slug
 gh issue close N
 ```
-
-### 병렬 트랙 시작
-
-이슈를 파일 겹침 없는 쌍으로 고른다 (`track:claude` / `track:codex` 라벨 확인).
-
-```bash
-# Claude 트랙: 현재 디렉터리에서 작업 후 pnpm verify
-# Codex 트랙:
-cd ../worktrees/feat-N-slug
-omc team 1:codex "<이슈 제목 + 수용 기준 전문>"
-```
-
-양쪽 완료 후 cross-review:
-- Claude → Codex 워크트리 리뷰
-- Codex → Claude 워크트리 `/codex review`
-
-P1 없으면 Git Manager(Claude)가 각각 PR 생성 및 순차 머지.
 
 ### Review Handoff (REVIEW-N.md 컨벤션)
 
@@ -135,16 +111,29 @@ p2_count: 1
 ## Verdict: REVISE
 ```
 
-**Codex 재구현 트리거 (유저가 실행):**
+**Discord 웹훅 → 자동 리뷰 → Codex 재구현 플로우:**
+
+Codex가 구현 완료 시 Discord 웹훅으로 Claude에게 알림:
+```
+Branch: feat/N-slug
+Commit: <sha>
+Repo: /path/to/worktrees/feat-N-slug
+Review file: REVIEW-1.md
+```
+
+Claude는 웹훅 수신 시 자동으로:
+1. 브랜치 diff 분석 + `pnpm verify` 실행
+2. `REVIEW-{N}.md` 작성 (worktree 루트)
+3. **p1_count > 0** → Codex 재구현 자동 트리거:
 ```bash
 omc team 1:codex "Read REVIEW-{N}.md. Fix all unchecked P1 items. Run pnpm verify. If verify fails append failure output under '## Implementer Response' and note VERIFY_FAILED — do not commit. If passes, append what you fixed, commit, then use the discord-review-notify skill/script to complete the task and send the Claude review webhook mention. Do not call raw completed transition separately."
 ```
+4. **p1_count = 0 (APPROVED)** → Git Manager 모드로 PR 생성
 
 **규칙:**
-- Claude와 Codex는 이슈 라벨/트랙 배정에 따라 서로 cross-review 한다.
-- 리뷰 담당자가 누구든 채팅만으로 끝내지 말고 worktree 루트의 `REVIEW-N.md`에 결과를 남긴다.
-- YAML `status` + `## Verdict` 는 해당 사이클의 실제 리뷰 담당자가 작성한다.
-- 구현 담당자는 `## Implementer Response` 섹션만 갱신한다.
+- 리뷰 담당자(Claude)는 채팅만으로 끝내지 말고 worktree 루트의 `REVIEW-N.md`에 결과를 남긴다.
+- YAML `status` + `## Verdict` 는 Claude가 작성한다.
+- 구현 담당자(Codex)는 `## Implementer Response` 섹션만 갱신한다.
 - Codex worker가 Claude 리뷰 요청이 필요한 성공 종료를 할 때는 `~/.codex/skills/discord-review-notify/scripts/complete-task-and-notify-discord-review.sh` 또는 동일 스킬 경로를 사용한다.
 - 3사이클 후에도 P1 남으면 `status: ESCALATED` → 유저에게 에스컬레이션
 - `REVIEW*.md`는 `.gitignore` 적용 (PR diff에 포함되지 않음)
@@ -206,12 +195,9 @@ src/
 
 ## Review Mandate
 
-**Claude 1차 (self-review):** Tidy First 준수 · 테스트 커버리지 · `any` 없음 · API route 입력 검증
+**Claude (reviewer):** Codex 구현물을 검토. 관점: Tidy First 준수 · 테스트 커버리지 · `any` 없음 · API route 입력 검증 · architecture & data safety · performance
 
-**Codex 2차 (independent):** `/codex review` 또는 `/codex challenge` 실행.
-관점: architecture & Tidy First · data safety · performance · test coverage
-
-P1(blocker) → Claude가 수정 후 재검토. P2 → Claude 판단으로 반영 여부 결정.
+P1(blocker) → Codex가 수정 후 재검토. P2 → Claude 판단으로 반영 여부 결정.
 
 ## Deploy Configuration
 
