@@ -21,15 +21,6 @@ Rules:
 | Reviewer | Claude | Codex 구현물 검토 → REVIEW-N.md 작성 → P1 있으면 Codex 재트리거 |
 | Git Manager | Claude | APPROVED 후 PR 생성 및 머지 |
 
-**표준 플로우:**
-```
-Claude(이슈 작성)
-    → Codex(구현 → pnpm verify → discord-review-notify)
-    → Claude(리뷰 → REVIEW-N.md)
-        ├── P1 있음 → omc team 1:codex "Read REVIEW-N.md..." → 반복
-        └── P1 없음 → PR 생성
-```
-
 - Codex 시작: `omc team 1:codex "..."` (worktree에서 실행)
 - Codex worker 성공 종료 시 raw `transition-task-status ... to=completed` 대신 `discord-review-notify` 스크립트로 완료 전이와 Discord review 요청을 한 번에 처리한다. 실패 시에만 raw `to=failed` 전이를 사용한다.
 
