@@ -1,6 +1,6 @@
 // src/components/ConfirmCard.tsx
 'use client'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import type { PortfolioPosition, AssetClass } from '@/lib/types'
 import styles from './ConfirmCard.module.css'
 
@@ -21,6 +21,7 @@ const ASSET_CLASSES: AssetClass[] = ['국내주식', '해외주식', '채권', '
 
 export function ConfirmCard({ position, pct, isDuplicate, asRow, onDelete, onAssetClassChange, onSectorChange, onFieldChange }: Props) {
   const [expanded, setExpanded] = useState(false)
+  const cancelledSectorBlurRef = useRef(false)
   const [editValues, setEditValues] = useState({
     value: String(Math.round(position.value)),
     avgCost: String(Math.round(position.avgCost)),
@@ -49,6 +50,11 @@ export function ConfirmCard({ position, pct, isDuplicate, asRow, onDelete, onAss
   }
 
   function handleSectorBlur() {
+    if (cancelledSectorBlurRef.current) {
+      cancelledSectorBlurRef.current = false
+      return
+    }
+
     const nextSector = sectorInput.trim()
     onSectorChange(position.id, nextSector)
     setSectorEdit({ draft: nextSector || position.sector, base: position.sector })
@@ -57,6 +63,7 @@ export function ConfirmCard({ position, pct, isDuplicate, asRow, onDelete, onAss
   function handleSectorKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === 'Enter') e.currentTarget.blur()
     if (e.key === 'Escape') {
+      cancelledSectorBlurRef.current = true
       setSectorEdit({ draft: position.sector, base: position.sector })
       e.currentTarget.blur()
     }
