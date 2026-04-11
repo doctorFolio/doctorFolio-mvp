@@ -22,7 +22,6 @@ Rules:
 | Git Manager | Claude | APPROVED 후 PR 생성 및 머지 |
 
 - Codex 시작: `omc team 1:codex "..."` (worktree에서 실행)
-- Codex worker 성공 종료 시 raw `transition-task-status ... to=completed` 대신 `discord-review-notify` 스크립트로 완료 전이와 Discord review 요청을 한 번에 처리한다. 실패 시에만 raw `to=failed` 전이를 사용한다.
 
 ## Work Unit & Worktree Workflow
 
