@@ -2,11 +2,10 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { ConfirmCard } from '@/components/ConfirmCard'
-import { DEFAULT_TARGET, SESSION_KEYS } from '@/lib/types'
-import type { PortfolioPosition, AssetClass, TargetAllocation } from '@/lib/types'
+import { SESSION_KEYS } from '@/lib/types'
+import type { PortfolioPosition, AssetClass } from '@/lib/types'
 import styles from './page.module.css'
 
-const TARGET_FIELDS: Array<keyof TargetAllocation> = ['국내주식', '해외주식', '채권']
 const CASH_POSITION_ID = 'manual-cash-position'
 
 function readStoredCash(): string {
@@ -35,24 +34,6 @@ function createCashPosition(value: number): PortfolioPosition {
     assetClass: '기타',
     sector: '기타',
     sourceImage: 0,
-  }
-}
-
-function readStoredTarget(): TargetAllocation {
-  if (typeof window === 'undefined') return { ...DEFAULT_TARGET }
-
-  const raw = sessionStorage.getItem(SESSION_KEYS.TARGET)
-  if (!raw) return { ...DEFAULT_TARGET }
-
-  try {
-    const parsed = JSON.parse(raw) as Partial<Record<keyof TargetAllocation, unknown>>
-    return {
-      '국내주식': typeof parsed['국내주식'] === 'number' ? parsed['국내주식'] : DEFAULT_TARGET['국내주식'],
-      '해외주식': typeof parsed['해외주식'] === 'number' ? parsed['해외주식'] : DEFAULT_TARGET['해외주식'],
-      '채권': typeof parsed['채권'] === 'number' ? parsed['채권'] : DEFAULT_TARGET['채권'],
-    }
-  } catch {
-    return { ...DEFAULT_TARGET }
   }
 }
 
@@ -90,7 +71,6 @@ export default function ConfirmPage() {
     if (typeof window === 'undefined') return false
     return sessionStorage.getItem(SESSION_KEYS.RAW_POSITIONS) !== null
   })
-  const [target, setTarget] = useState<TargetAllocation>(() => readStoredTarget())
   const [cashInput, setCashInput] = useState(() => readStoredCash())
 
   const cashAmount = parseCashAmount(cashInput)
@@ -147,13 +127,8 @@ export default function ConfirmPage() {
     setPositions(prev => prev.map(p => p.id === id ? { ...p, [field]: value } : p))
   }
 
-  function handleTargetChange(assetClass: keyof TargetAllocation, value: number) {
-    setTarget(prev => ({ ...prev, [assetClass]: value }))
-  }
-
   function handleStart() {
     sessionStorage.setItem(SESSION_KEYS.CONFIRMED, JSON.stringify(diagnosisPositions))
-    sessionStorage.setItem(SESSION_KEYS.TARGET, JSON.stringify(target))
     sessionStorage.removeItem(SESSION_KEYS.DIAGNOSIS)
     router.push('/style')
   }
@@ -161,8 +136,6 @@ export default function ConfirmPage() {
   if (!loaded) return null
 
   const hasDuplicates = Object.values(nameCounts).some(c => c > 1)
-  const targetSum = TARGET_FIELDS.reduce((sum, assetClass) => sum + target[assetClass], 0)
-  const isTargetBalanced = targetSum === 100
   const hasPositions = positions.length > 0
   const cashSection = hasPositions ? (
     <section className={styles.cashSection}>
@@ -182,54 +155,6 @@ export default function ConfirmPage() {
         </div>
       </label>
     </section>
-  ) : null
-  const targetSection = hasPositions ? (
-    <>
-      <div className={styles.partDivider}>
-        <hr className={styles.partDividerLine} />
-        <span className={styles.partDividerLabel}>지금 가진 것 → 앞으로 원하는 것</span>
-        <hr className={styles.partDividerLine} />
-      </div>
-
-      <section className={styles.targetSection}>
-        <div className={styles.targetHeader}>
-          <h2 className={styles.targetTitle}>목표 배분 조정</h2>
-          <p className={styles.targetHint}>원하는 비중으로 슬라이더를 조정한 뒤 다음 단계로 이동하세요.</p>
-        </div>
-
-        <div className={styles.sliderList}>
-          {TARGET_FIELDS.map(assetClass => (
-            <label key={assetClass} className={styles.sliderRow}>
-              <div className={styles.sliderMeta}>
-                <span className={styles.sliderLabel}>{assetClass}</span>
-                <span className={styles.sliderValue}>{target[assetClass]}%</span>
-              </div>
-              <input
-                className={styles.slider}
-                type="range"
-                min={0}
-                max={100}
-                step={5}
-                value={target[assetClass]}
-                onChange={e => handleTargetChange(assetClass, Number(e.target.value))}
-              />
-            </label>
-          ))}
-        </div>
-
-        <div
-          className={`${styles.targetSummary} ${
-            isTargetBalanced ? styles.targetSummaryValid : styles.targetSummaryInvalid
-          }`}
-        >
-          <span className={styles.targetSummaryLabel}>합계</span>
-          <strong className={styles.targetSummaryValue}>{targetSum}%</strong>
-          <span className={styles.targetSummaryMessage}>
-            {isTargetBalanced ? '합계가 100%입니다.' : '합계가 100%가 되도록 조정해주세요.'}
-          </span>
-        </div>
-      </section>
-    </>
   ) : null
 
   return (
@@ -278,7 +203,6 @@ export default function ConfirmPage() {
             </table>
           </div>
           {cashSection}
-          {targetSection}
         </>
       ) : (
         /* 모바일 카드 뷰 */
@@ -313,7 +237,6 @@ export default function ConfirmPage() {
             </div>
           )}
           {cashSection}
-          {targetSection}
         </div>
       )}
 

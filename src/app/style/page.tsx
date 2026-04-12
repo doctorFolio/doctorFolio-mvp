@@ -8,6 +8,7 @@ import type { StyleKey, PortfolioPosition, TargetAllocation } from '@/lib/types'
 import styles from './page.module.css'
 
 const STYLE_KEYS: StyleKey[] = ['stable', 'balanced', 'growth', 'aggressive']
+const TARGET_FIELDS: Array<keyof TargetAllocation> = ['국내주식', '해외주식', '채권']
 
 function readConfirmedPositions(): PortfolioPosition[] {
   if (typeof window === 'undefined') return []
@@ -68,6 +69,7 @@ export default function StylePage() {
     return sessionStorage.getItem(SESSION_KEYS.CONFIRMED) !== null
   })
   const [selected, setSelected] = useState<StyleKey | null>(null)
+  const [target, setTarget] = useState<TargetAllocation>(() => readStoredTarget())
 
   useEffect(() => {
     if (!loaded) router.replace('/confirm')
@@ -78,7 +80,9 @@ export default function StylePage() {
   const currentStyle = inferStyleKey(positions)
   const currentPreset = PRESETS[currentStyle]
   const allocationDesc = getAllocationDesc(positions)
-  const isSameStyle = selected === currentStyle
+  const targetSum = TARGET_FIELDS.reduce((sum, assetClass) => sum + target[assetClass], 0)
+  const isTargetBalanced = targetSum === 100
+  const isSameStyle = TARGET_FIELDS.every(assetClass => target[assetClass] === currentPreset.target[assetClass])
 
   function moveToDiagnosis(target: typeof DEFAULT_TARGET) {
     sessionStorage.setItem(SESSION_KEYS.TARGET, JSON.stringify(target))
@@ -87,19 +91,23 @@ export default function StylePage() {
     router.push('/diagnosis')
   }
 
-  function handleNext() {
-    if (!selected) return
-    const target = PRESETS[selected].target
-    sessionStorage.setItem(
-      SESSION_KEYS.INVESTOR_PROFILE,
-      JSON.stringify({ currentStyle, desiredStyle: selected }),
-    )
-    moveToDiagnosis(target)
+  function handleTargetChange(assetClass: keyof TargetAllocation, value: number) {
+    setTarget(prev => ({ ...prev, [assetClass]: value }))
   }
 
-  function handleSkip() {
-    sessionStorage.removeItem(SESSION_KEYS.INVESTOR_PROFILE)
-    moveToDiagnosis(readStoredTarget())
+  function handleNext() {
+    if (!isTargetBalanced) return
+
+    if (selected) {
+      sessionStorage.setItem(
+        SESSION_KEYS.INVESTOR_PROFILE,
+        JSON.stringify({ currentStyle, desiredStyle: selected }),
+      )
+    } else {
+      sessionStorage.removeItem(SESSION_KEYS.INVESTOR_PROFILE)
+    }
+
+    moveToDiagnosis(target)
   }
 
   return (
@@ -130,46 +138,85 @@ export default function StylePage() {
         )}
 
         <div className={styles.cardWrap}>
-        <div
-          className={styles.cardTrack}
-          role="radiogroup"
-          aria-label="투자 성향 선택"
-        >
-          {STYLE_KEYS.map(key => {
-            const p = PRESETS[key]
-            const isSelected = selected === key
-            return (
-              <button
-                key={key}
-                role="radio"
-                aria-checked={isSelected}
-                aria-label={`${p.label}: ${p.desc}. 국내 ${p.target['국내주식']}, 해외 ${p.target['해외주식']}, 채권 ${p.target['채권']}`}
-                className={`${styles.card} ${isSelected ? styles.cardSelected : ''}`}
-                onClick={() => setSelected(key)}
-              >
-                {isSelected && <span className={styles.check} aria-hidden="true">✓</span>}
-                <span className={styles.cardEmoji}>{p.emoji}</span>
-                <span className={styles.cardLabel}>{p.label}</span>
-                <span className={styles.cardDesc}>{p.desc}</span>
-                <span className={styles.cardAlloc}>
-                  국내 {p.target['국내주식']} · 해외 {p.target['해외주식']} · 채권 {p.target['채권']}
-                </span>
-              </button>
-            )
-          })}
+          <div
+            className={styles.cardTrack}
+            role="radiogroup"
+            aria-label="투자 성향 선택"
+          >
+            {STYLE_KEYS.map(key => {
+              const p = PRESETS[key]
+              const isSelected = selected === key
+              return (
+                <button
+                  key={key}
+                  role="radio"
+                  aria-checked={isSelected}
+                  aria-label={`${p.label}: ${p.desc}. 국내 ${p.target['국내주식']}, 해외 ${p.target['해외주식']}, 채권 ${p.target['채권']}`}
+                  className={`${styles.card} ${isSelected ? styles.cardSelected : ''}`}
+                  onClick={() => {
+                    setSelected(key)
+                    setTarget(PRESETS[key].target)
+                  }}
+                >
+                  {isSelected && <span className={styles.check} aria-hidden="true">✓</span>}
+                  <span className={styles.cardEmoji}>{p.emoji}</span>
+                  <span className={styles.cardLabel}>{p.label}</span>
+                  <span className={styles.cardDesc}>{p.desc}</span>
+                  <span className={styles.cardAlloc}>
+                    국내 {p.target['국내주식']} · 해외 {p.target['해외주식']} · 채권 {p.target['채권']}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
         </div>
-        </div>
+
+        <section className={styles.targetSection}>
+          <div className={styles.targetHeader}>
+            <h2 className={styles.targetTitle}>목표 배분 설정</h2>
+            <p className={styles.targetHint}>원하는 비중으로 조정하세요.</p>
+          </div>
+
+          <div className={styles.sliderList}>
+            {TARGET_FIELDS.map(assetClass => (
+              <label key={assetClass} className={styles.sliderRow}>
+                <div className={styles.sliderMeta}>
+                  <span className={styles.sliderLabel}>{assetClass}</span>
+                  <span className={styles.sliderValue}>{target[assetClass]}%</span>
+                </div>
+                <input
+                  className={styles.slider}
+                  type="range"
+                  min={0}
+                  max={100}
+                  step={5}
+                  value={target[assetClass]}
+                  onChange={e => handleTargetChange(assetClass, Number(e.target.value))}
+                />
+              </label>
+            ))}
+          </div>
+
+          <div
+            className={`${styles.targetSummary} ${
+              isTargetBalanced ? styles.targetSummaryValid : styles.targetSummaryInvalid
+            }`}
+          >
+            <span className={styles.targetSummaryLabel}>합계</span>
+            <strong className={styles.targetSummaryValue}>{targetSum}%</strong>
+            <span className={styles.targetSummaryMessage}>
+              {isTargetBalanced ? '합계가 100%입니다.' : '합계가 100%가 되도록 조정해주세요.'}
+            </span>
+          </div>
+        </section>
 
         <div className="fixed-cta">
           <button
             className="btn-primary"
-            disabled={!selected}
+            disabled={!isTargetBalanced}
             onClick={handleNext}
           >
             다음 →
-          </button>
-          <button className={styles.skipBtn} onClick={handleSkip}>
-            프리셋 건너뛰기
           </button>
         </div>
       </div>
