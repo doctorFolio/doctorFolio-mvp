@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { ConfirmCard } from '@/components/ConfirmCard'
-import { runDiagnosis } from '@/lib/engine'
 import { DEFAULT_TARGET, SESSION_KEYS } from '@/lib/types'
 import type { PortfolioPosition, AssetClass, TargetAllocation } from '@/lib/types'
 import styles from './page.module.css'
@@ -155,9 +154,8 @@ export default function ConfirmPage() {
   function handleStart() {
     sessionStorage.setItem(SESSION_KEYS.CONFIRMED, JSON.stringify(diagnosisPositions))
     sessionStorage.setItem(SESSION_KEYS.TARGET, JSON.stringify(target))
-    const diagnosis = runDiagnosis(diagnosisPositions, target)
-    sessionStorage.setItem(SESSION_KEYS.DIAGNOSIS, JSON.stringify(diagnosis))
-    router.push('/diagnosis')
+    sessionStorage.removeItem(SESSION_KEYS.DIAGNOSIS)
+    router.push('/style')
   }
 
   if (!loaded) return null
@@ -196,7 +194,7 @@ export default function ConfirmPage() {
       <section className={styles.targetSection}>
         <div className={styles.targetHeader}>
           <h2 className={styles.targetTitle}>목표 배분 조정</h2>
-          <p className={styles.targetHint}>원하는 비중으로 슬라이더를 조정한 뒤 진단을 시작하세요.</p>
+          <p className={styles.targetHint}>원하는 비중으로 슬라이더를 조정한 뒤 다음 단계로 이동하세요.</p>
         </div>
 
         <div className={styles.sliderList}>
@@ -321,7 +319,7 @@ export default function ConfirmPage() {
 
       {hasPositions && (
         <div className="fixed-cta">
-          <button className="btn-primary" onClick={handleStart}>진단 시작</button>
+          <button className="btn-primary" onClick={handleStart}>다음 →</button>
         </div>
       )}
     </div>

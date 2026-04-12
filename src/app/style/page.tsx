@@ -1,12 +1,44 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { runDiagnosis } from '@/lib/engine'
 import { PRESETS, inferStyleKey } from '@/lib/investorProfile'
 import { DEFAULT_TARGET, SESSION_KEYS } from '@/lib/types'
-import type { StyleKey, PortfolioPosition } from '@/lib/types'
+import type { StyleKey, PortfolioPosition, TargetAllocation } from '@/lib/types'
 import styles from './page.module.css'
 
 const STYLE_KEYS: StyleKey[] = ['stable', 'balanced', 'growth', 'aggressive']
+
+function readConfirmedPositions(): PortfolioPosition[] {
+  if (typeof window === 'undefined') return []
+
+  const raw = sessionStorage.getItem(SESSION_KEYS.CONFIRMED)
+  if (!raw) return []
+
+  try {
+    return JSON.parse(raw) as PortfolioPosition[]
+  } catch {
+    return []
+  }
+}
+
+function readStoredTarget(): TargetAllocation {
+  if (typeof window === 'undefined') return { ...DEFAULT_TARGET }
+
+  const raw = sessionStorage.getItem(SESSION_KEYS.TARGET)
+  if (!raw) return { ...DEFAULT_TARGET }
+
+  try {
+    const parsed = JSON.parse(raw) as Partial<Record<keyof TargetAllocation, unknown>>
+    return {
+      '국내주식': typeof parsed['국내주식'] === 'number' ? parsed['국내주식'] : DEFAULT_TARGET['국내주식'],
+      '해외주식': typeof parsed['해외주식'] === 'number' ? parsed['해외주식'] : DEFAULT_TARGET['해외주식'],
+      '채권': typeof parsed['채권'] === 'number' ? parsed['채권'] : DEFAULT_TARGET['채권'],
+    }
+  } catch {
+    return { ...DEFAULT_TARGET }
+  }
+}
 
 function getAllocationDesc(positions: PortfolioPosition[]): string {
   const total = positions.reduce((s, p) => s + p.value, 0)
@@ -30,19 +62,15 @@ function getAllocationDesc(positions: PortfolioPosition[]): string {
 
 export default function StylePage() {
   const router = useRouter()
-  const [positions] = useState<PortfolioPosition[]>(() => {
-    if (typeof window === 'undefined') return []
-    const raw = sessionStorage.getItem(SESSION_KEYS.RAW_POSITIONS)
-    return raw ? (JSON.parse(raw) as PortfolioPosition[]) : []
-  })
+  const [positions] = useState<PortfolioPosition[]>(() => readConfirmedPositions())
   const [loaded] = useState(() => {
     if (typeof window === 'undefined') return false
-    return sessionStorage.getItem(SESSION_KEYS.RAW_POSITIONS) !== null
+    return sessionStorage.getItem(SESSION_KEYS.CONFIRMED) !== null
   })
   const [selected, setSelected] = useState<StyleKey | null>(null)
 
   useEffect(() => {
-    if (!loaded) router.replace('/')
+    if (!loaded) router.replace('/confirm')
   }, [loaded, router])
 
   if (!loaded) return null
@@ -52,26 +80,33 @@ export default function StylePage() {
   const allocationDesc = getAllocationDesc(positions)
   const isSameStyle = selected === currentStyle
 
+  function moveToDiagnosis(target: typeof DEFAULT_TARGET) {
+    sessionStorage.setItem(SESSION_KEYS.TARGET, JSON.stringify(target))
+    const diagnosis = runDiagnosis(positions, target)
+    sessionStorage.setItem(SESSION_KEYS.DIAGNOSIS, JSON.stringify(diagnosis))
+    router.push('/diagnosis')
+  }
+
   function handleNext() {
     if (!selected) return
-    sessionStorage.setItem(SESSION_KEYS.TARGET, JSON.stringify(PRESETS[selected].target))
+    const target = PRESETS[selected].target
     sessionStorage.setItem(
       SESSION_KEYS.INVESTOR_PROFILE,
       JSON.stringify({ currentStyle, desiredStyle: selected }),
     )
-    router.push('/confirm')
+    moveToDiagnosis(target)
   }
 
   function handleSkip() {
-    sessionStorage.setItem(SESSION_KEYS.TARGET, JSON.stringify(DEFAULT_TARGET))
-    router.push('/confirm')
+    sessionStorage.removeItem(SESSION_KEYS.INVESTOR_PROFILE)
+    moveToDiagnosis(readStoredTarget())
   }
 
   return (
     <div className={styles.wrap}>
       <nav className="nav">
         <span className="logo">포트폴리오<em>·</em>닥터</span>
-        <span className="nav-step">1 / 2</span>
+        <span className="nav-step">2 / 2</span>
       </nav>
 
       {/* 네이비 헤더 — 현재 성향 */}
@@ -134,7 +169,7 @@ export default function StylePage() {
             다음 →
           </button>
           <button className={styles.skipBtn} onClick={handleSkip}>
-            건너뛰기 (기본값 사용)
+            프리셋 건너뛰기
           </button>
         </div>
       </div>
