@@ -5,9 +5,11 @@ import { useRouter } from 'next/navigation'
 import { ProblemCard } from '@/components/ProblemCard'
 import { AllocationBar } from '@/components/AllocationBar'
 import { ActionItem } from '@/components/ActionItem'
+import { SectorPieChart } from '@/components/SectorPieChart'
 import { DIAGNOSIS_DISCLAIMER_LINES } from '@/lib/disclaimers'
 import { getTargetAllocationErrorMessage } from '@/lib/targetAllocation'
 import { inferMbtiType, MBTI_PROFILES } from '@/lib/mbti'
+import { buildSectorAllocation } from '@/lib/sectorAllocation'
 import { SESSION_KEYS } from '@/lib/types'
 import type { DiagnosisResult, PortfolioPosition } from '@/lib/types'
 import styles from './page.module.css'
@@ -75,6 +77,7 @@ export default function DiagnosisPage() {
   const isHealthy = diagnosis.problems.length === 0
   const target = diagnosis.targetAllocation
   const targetErrorMessage = getTargetAllocationErrorMessage(target)
+  const sectorSlices = buildSectorAllocation(positions)
 
   return (
     <div className={styles.wrap}>
@@ -116,6 +119,8 @@ export default function DiagnosisPage() {
             </div>
           </>
         )}
+
+        {sectorSlices.length > 0 && <SectorPieChart slices={sectorSlices} />}
 
         {/* 왜 이 조언인가요? */}
         <button className={`${styles.explainBtn} ${explainOpen ? styles.explainOpen : ''}`} onClick={toggleExplain}>
