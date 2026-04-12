@@ -10,6 +10,12 @@ import styles from './page.module.css'
 const STYLE_KEYS: StyleKey[] = ['stable', 'balanced', 'growth', 'aggressive']
 const TARGET_FIELDS: Array<keyof TargetAllocation> = ['국내주식', '해외주식', '채권', '현금']
 
+function findStyleKeyByTarget(target: TargetAllocation): StyleKey | null {
+  return STYLE_KEYS.find(styleKey =>
+    TARGET_FIELDS.every(assetClass => PRESETS[styleKey].target[assetClass] === target[assetClass]),
+  ) ?? null
+}
+
 function readConfirmedPositions(): PortfolioPosition[] {
   if (typeof window === 'undefined') return []
 
@@ -69,7 +75,7 @@ export default function StylePage() {
     if (typeof window === 'undefined') return false
     return sessionStorage.getItem(SESSION_KEYS.CONFIRMED) !== null
   })
-  const [selected, setSelected] = useState<StyleKey | null>(null)
+  const [selected, setSelected] = useState<StyleKey | null>(() => findStyleKeyByTarget(readStoredTarget()))
   const [target, setTarget] = useState<TargetAllocation>(() => readStoredTarget())
   const [quizMode, setQuizMode] = useState(false)
   const [currentQuestion, setCurrentQuestion] = useState(0)
@@ -87,6 +93,7 @@ export default function StylePage() {
   const allocationDesc = getAllocationDesc(positions)
   const targetSum = TARGET_FIELDS.reduce((sum, assetClass) => sum + target[assetClass], 0)
   const isTargetBalanced = targetSum === 100
+  const canProceed = selected !== null && isTargetBalanced
   const isSameStyle = TARGET_FIELDS.every(assetClass => target[assetClass] === currentPreset.target[assetClass])
   const activeQuestion = QUIZ_QUESTIONS[currentQuestion]
   const selectedChoice = quizAnswers[currentQuestion]
@@ -128,16 +135,12 @@ export default function StylePage() {
   }
 
   function handleNext() {
-    if (!isTargetBalanced) return
+    if (!selected || !isTargetBalanced) return
 
-    if (selected) {
-      sessionStorage.setItem(
-        SESSION_KEYS.INVESTOR_PROFILE,
-        JSON.stringify({ currentStyle, desiredStyle: selected }),
-      )
-    } else {
-      sessionStorage.removeItem(SESSION_KEYS.INVESTOR_PROFILE)
-    }
+    sessionStorage.setItem(
+      SESSION_KEYS.INVESTOR_PROFILE,
+      JSON.stringify({ currentStyle, desiredStyle: selected }),
+    )
 
     moveToDiagnosis(target)
   }
@@ -276,6 +279,12 @@ export default function StylePage() {
           </div>
         </div>
 
+        {!selected && (
+          <p className={styles.selectionRequired} role="status">
+            투자 성향을 먼저 선택하거나 퀴즈를 완료해주세요.
+          </p>
+        )}
+
         <section className={styles.targetSection}>
           <div className={styles.targetHeader}>
             <h2 className={styles.targetTitle}>목표 배분 설정</h2>
@@ -318,7 +327,7 @@ export default function StylePage() {
         <div className="fixed-cta">
           <button
             className="btn-primary"
-            disabled={!isTargetBalanced}
+            disabled={!canProceed}
             onClick={handleNext}
           >
             다음 →

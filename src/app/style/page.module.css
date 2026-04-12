@@ -216,6 +216,13 @@
   color: var(--green);
 }
 
+.selectionRequired {
+  margin: 4px 20px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #b45309;
+}
+
 /* 카드 스크롤 래퍼 — 오른쪽 페이드 */
 .cardWrap {
   position: relative;
@@ -431,7 +438,8 @@
   .quizEntry,
   .quizWrap,
   .quizResult,
-  .sameBanner {
+  .sameBanner,
+  .selectionRequired {
     margin-left: 32px;
     margin-right: 32px;
   }
