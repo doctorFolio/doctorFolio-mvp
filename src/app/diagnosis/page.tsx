@@ -6,32 +6,77 @@ import { ProblemCard } from '@/components/ProblemCard'
 import { AllocationBar } from '@/components/AllocationBar'
 import { ActionItem } from '@/components/ActionItem'
 import { SectorPieChart } from '@/components/SectorPieChart'
+import { ImprovementSheet } from '@/components/ImprovementSheet'
 import { DIAGNOSIS_DISCLAIMER_LINES } from '@/lib/disclaimers'
+import { computeHealthScore, computeIdealScore } from '@/lib/healthScore'
+import { inferStyleKey } from '@/lib/investorProfile'
 import { getTargetAllocationErrorMessage } from '@/lib/targetAllocation'
 import { inferMbtiType, MBTI_PROFILES } from '@/lib/mbti'
 import { buildSectorAllocation } from '@/lib/sectorAllocation'
 import { SESSION_KEYS } from '@/lib/types'
-import type { DiagnosisResult, PortfolioPosition } from '@/lib/types'
+import type {
+  DiagnosisResult,
+  InvestorProfile,
+  PortfolioPosition,
+  StyleKey,
+} from '@/lib/types'
 import styles from './page.module.css'
+
+const STYLE_KEYS: StyleKey[] = ['stable', 'balanced', 'growth', 'aggressive']
+
+function readConfirmedPositions(): PortfolioPosition[] {
+  if (typeof window === 'undefined') return []
+
+  const raw = sessionStorage.getItem(SESSION_KEYS.CONFIRMED)
+  if (!raw) return []
+
+  try {
+    return JSON.parse(raw) as PortfolioPosition[]
+  } catch {
+    return []
+  }
+}
+
+function isStyleKey(value: unknown): value is StyleKey {
+  return typeof value === 'string' && STYLE_KEYS.includes(value as StyleKey)
+}
+
+function readDesiredStyle(positions: PortfolioPosition[]): StyleKey {
+  const inferredStyle = inferStyleKey(positions)
+
+  if (typeof window === 'undefined') return inferredStyle
+
+  const raw = sessionStorage.getItem(SESSION_KEYS.INVESTOR_PROFILE)
+  if (!raw) return inferredStyle
+
+  try {
+    const profile = JSON.parse(raw) as Partial<InvestorProfile>
+    return isStyleKey(profile.desiredStyle) ? profile.desiredStyle : inferredStyle
+  } catch {
+    return inferredStyle
+  }
+}
 
 export default function DiagnosisPage() {
   const router = useRouter()
   const [diagnosis, setDiagnosis] = useState<DiagnosisResult | null>(null)
-  const [positions] = useState<PortfolioPosition[]>(() => {
-    if (typeof window === 'undefined') return []
-    const raw = sessionStorage.getItem(SESSION_KEYS.CONFIRMED)
-    return raw ? (JSON.parse(raw) as PortfolioPosition[]) : []
-  })
+  const [positions] = useState<PortfolioPosition[]>(() => readConfirmedPositions())
+  const [desiredStyle] = useState<StyleKey>(() => readDesiredStyle(positions))
   const [copied, setCopied] = useState(false)
   const [explainOpen, setExplainOpen] = useState(false)
   const [explanation, setExplanation] = useState<string | null>(null)
   const [explainLoading, setExplainLoading] = useState(false)
   const [explainError, setExplainError] = useState(false)
+  const [sheetOpen, setSheetOpen] = useState(false)
 
   useEffect(() => {
     const raw = sessionStorage.getItem(SESSION_KEYS.DIAGNOSIS)
     if (!raw) { router.replace('/'); return }
-    setDiagnosis(JSON.parse(raw))
+    try {
+      setDiagnosis(JSON.parse(raw) as DiagnosisResult)
+    } catch {
+      router.replace('/')
+    }
   }, [router])
 
   async function toggleExplain() {
@@ -78,6 +123,8 @@ export default function DiagnosisPage() {
   const target = diagnosis.targetAllocation
   const targetErrorMessage = getTargetAllocationErrorMessage(target)
   const sectorSlices = buildSectorAllocation(positions)
+  const currentScore = computeHealthScore(diagnosis.currentAllocation, target, positions, desiredStyle)
+  const idealScore = computeIdealScore(diagnosis.currentAllocation, positions, desiredStyle)
 
   return (
     <div className={styles.wrap}>
@@ -96,6 +143,10 @@ export default function DiagnosisPage() {
             <div className={styles.subline}>포인트가 있습니다</div>
           </>
         )}
+        <div className={styles.healthScore}>
+          <span className={styles.healthScoreLabel}>건강점수</span>
+          <strong className={styles.healthScoreValue}>{currentScore}점</strong>
+        </div>
         <AllocationBar current={diagnosis.currentAllocation} target={target} />
         {targetErrorMessage && (
           <p className={styles.targetError} role="alert">
@@ -119,6 +170,10 @@ export default function DiagnosisPage() {
             </div>
           </>
         )}
+        <button className={styles.improvementBtn} onClick={() => setSheetOpen(true)}>
+          포트폴리오 개선 보기
+          <span className={styles.improvementBtnArrow} aria-hidden="true">→</span>
+        </button>
 
         {sectorSlices.length > 0 && <SectorPieChart slices={sectorSlices} />}
 
@@ -174,6 +229,14 @@ export default function DiagnosisPage() {
           ↩ 다시 진단하기
         </button>
       </div>
+      <ImprovementSheet
+        currentAllocation={diagnosis.currentAllocation}
+        targetAllocation={target}
+        currentScore={currentScore}
+        idealScore={idealScore}
+        open={sheetOpen}
+        onClose={() => setSheetOpen(false)}
+      />
     </div>
   )
 }

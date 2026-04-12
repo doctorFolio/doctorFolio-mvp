@@ -1,6 +1,6 @@
 // src/lib/investorProfile.test.ts
 import { describe, it, expect } from 'vitest'
-import { inferStyleKey, PRESETS } from './investorProfile'
+import { inferStyleKey, PRESETS, QUIZ_QUESTIONS, scoreToStyleKey } from './investorProfile'
 import type { PortfolioPosition } from './types'
 
 function pos(assetClass: PortfolioPosition['assetClass'], value: number): PortfolioPosition {
@@ -62,6 +62,7 @@ describe('PRESETS round-trip', () => {
         pos('국내주식', t['국내주식']),
         pos('해외주식', t['해외주식']),
         pos('채권', t['채권']),
+        pos('기타', t['현금']),
       ]
       expect(inferStyleKey(positions), `${key} round-trip`).toBe(key)
     }
@@ -73,7 +74,7 @@ describe('PRESETS', () => {
     const keys = ['stable', 'balanced', 'growth', 'aggressive'] as const
     for (const key of keys) {
       const t = PRESETS[key].target
-      expect(t['국내주식'] + t['해외주식'] + t['채권']).toBe(100)
+      expect(t['국내주식'] + t['해외주식'] + t['채권'] + t['현금']).toBe(100)
     }
   })
 
@@ -83,6 +84,35 @@ describe('PRESETS', () => {
       expect(preset.emoji).toBeTruthy()
       expect(preset.desc).toBeTruthy()
       expect(preset.target).toBeTruthy()
+    }
+  })
+})
+
+describe('scoreToStyleKey', () => {
+  it.each([
+    [-6, 'stable'],
+    [-1, 'stable'],
+    [0, 'balanced'],
+    [2, 'balanced'],
+    [3, 'growth'],
+    [6, 'growth'],
+    [7, 'aggressive'],
+    [10, 'aggressive'],
+  ] as const)('%i점을 %s로 매핑한다', (score, expected) => {
+    expect(scoreToStyleKey(score)).toBe(expected)
+  })
+})
+
+describe('QUIZ_QUESTIONS', () => {
+  it('5개의 질문으로 구성된다', () => {
+    expect(QUIZ_QUESTIONS).toHaveLength(5)
+  })
+
+  it('각 질문은 최소 3개의 선택지를 가진다', () => {
+    for (const question of QUIZ_QUESTIONS) {
+      expect(question.question).toBeTruthy()
+      expect(question.choices).toBeDefined()
+      expect(question.choices.length).toBeGreaterThanOrEqual(3)
     }
   })
 })

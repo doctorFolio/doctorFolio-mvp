@@ -82,6 +82,13 @@ src/
 - Commit prefixes: `refactor:` (structural), `feat:` / `fix:` (behavioral)
 - Only commit when all Vitest suites pass and TypeScript shows zero errors.
 
+**Commit discipline:**
+- **단일 책임:** 한 커밋에 하나의 변경만. 타입 추가, 엔진 수정, UI 수정이 있으면 최소 3개 커밋으로 분리한다.
+- **의도 중심 메시지:** "무엇을 바꿨나"가 아니라 "왜 바꿨나 / 무엇을 해결했나"를 적는다.
+  - ❌ `feat: AllocationBucket 타입 추가 및 engine.ts 수정`
+  - ✅ `feat: 현금을 기타에서 분리해 drift 진단 정확도 개선`
+- 커밋 메시지는 Discord 리뷰 요청 알림에 그대로 노출되므로 리뷰어가 구현 의도를 파악할 수 있게 작성한다.
+
 **Refactor when:** file > 200 lines · function > 50 lines · props drill 3+ levels · same code in 3+ places
 
 **Domain rule:** 중복 티커 자동 제거 금지 — 다른 계좌에 동일 종목이 있을 수 있다.
