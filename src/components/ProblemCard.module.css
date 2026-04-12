@@ -99,16 +99,6 @@
 
 .currentRed { color: var(--red); }
 .currentAmber { color: var(--amber); }
-.arrow { font-size: 13px; color: var(--text-3); }
-.target { font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--text-2); }
-.targetNote { font-size: 11px; color: var(--text-3); margin-left: 2px; }
-.threshold {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--text-2);
-  margin-left: 4px;
-}
-.desc { font-size: 13px; color: var(--text-2); line-height: 1.6; }
 
 .deltaBadge {
   padding: 8px 12px;

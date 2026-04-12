@@ -7,15 +7,6 @@ interface Props {
   index: number
 }
 
-function getProblemMeta(problem: Problem): { category: string; targetLabel: string } {
-  switch (problem.type) {
-    case 'drift':
-      return { category: '자산 배분', targetLabel: '목표' }
-    case 'concentration_stock':
-      return { category: '단일 종목', targetLabel: '기준선' }
-    case 'concentration_sector':
-      return { category: '섹터 집중', targetLabel: '기준선' }
-  }
 function getCategoryLabel(problem: Problem): string {
   if (problem.type === 'drift') return '자산 배분'
   if (problem.type === 'concentration_stock') return '단일 종목'
@@ -23,7 +14,7 @@ function getCategoryLabel(problem: Problem): string {
 }
 
 function getTargetLabel(problem: Problem): string {
-  return problem.type === 'drift' ? '목표' : '권장 상한'
+  return problem.type === 'drift' ? '목표' : '기준선'
 }
 
 function formatPercent(value: number): string {
@@ -98,7 +89,6 @@ function getRecommendationLines(problem: Problem): string[] {
 export function ProblemCard({ problem, index }: Props) {
   const num = String(index + 1).padStart(2, '0')
   const isRed = problem.severity === 'high'
-  const meta = getProblemMeta(problem)
   const recommendationLines = getRecommendationLines(problem)
 
   return (
@@ -107,21 +97,6 @@ export function ProblemCard({ problem, index }: Props) {
       role="article"
       aria-label={`진단 항목 ${index + 1}`}
     >
-      <div className={styles.num}>{num} · {meta.category}</div>
-      <div className={styles.title}>{problem.label}</div>
-      <div className={styles.numbers}>
-        <span className={`${styles.current} ${isRed ? styles.currentRed : styles.currentAmber}`}>
-          {problem.current}%
-        </span>
-        {problem.type === 'drift' ? (
-          <>
-            <span className={styles.arrow}>→</span>
-            <span className={styles.target}>{problem.target}%</span>
-            <span className={styles.targetNote}>{meta.targetLabel}</span>
-          </>
-        ) : (
-          <span className={styles.threshold}>{meta.targetLabel} {problem.target}%</span>
-        )}
       <div className={styles.top}>
         <div>
           <div className={styles.num}>{num} · {getCategoryLabel(problem)}</div>
