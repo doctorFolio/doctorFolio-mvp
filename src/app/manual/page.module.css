@@ -17,9 +17,10 @@
 }
 
 .brand {
-  font-size: 20px;
-  font-weight: 800;
-  letter-spacing: -0.6px;
+  font-size: 24px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.8px;
   color: var(--navy);
 }
 
@@ -98,6 +99,13 @@
 .formGrid + .formGridTriple,
 .formGridTriple + .helperText,
 .helperText + .addButton {
+  margin-top: 14px;
+}
+
+.formCard > .field + .formGrid,
+.formCard > .field + .formGridTriple,
+.formCard > .field + .helperText,
+.formCard > .field + .addButton {
   margin-top: 14px;
 }
 
@@ -191,12 +199,6 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-}
-
-.positionCodeMeta {
-  padding: 0 4px;
-  font-size: 12px;
-  color: var(--text-3);
 }
 
 .emptyState {

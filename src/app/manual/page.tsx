@@ -88,29 +88,16 @@ export default function ManualInputPage() {
 
         <section className={styles.section}>
           <form className={styles.formCard} onSubmit={handleAddPosition}>
-            <div className={styles.formGrid}>
-              <label className={styles.field}>
-                <span className={styles.label}>종목명</span>
-                <input
-                  className={styles.input}
-                  type="text"
-                  value={draft.name}
-                  onChange={event => setDraft(currentDraft => ({ ...currentDraft, name: event.target.value }))}
-                  placeholder="예: 삼성전자"
-                />
-              </label>
-
-              <label className={styles.field}>
-                <span className={styles.label}>종목코드</span>
-                <input
-                  className={styles.input}
-                  type="text"
-                  value={draft.code}
-                  onChange={event => setDraft(currentDraft => ({ ...currentDraft, code: event.target.value }))}
-                  placeholder="예: 005930 또는 AAPL"
-                />
-              </label>
-            </div>
+            <label className={styles.field}>
+              <span className={styles.label}>종목명</span>
+              <input
+                className={styles.input}
+                type="text"
+                value={draft.name}
+                onChange={event => setDraft(currentDraft => ({ ...currentDraft, name: event.target.value }))}
+                placeholder="예: 삼성전자"
+              />
+            </label>
 
             <div className={styles.formGrid}>
               <label className={styles.field}>
@@ -227,7 +214,6 @@ export default function ManualInputPage() {
             <div className={styles.positionList}>
               {positions.map(position => (
                 <div key={position.id} className={styles.positionCardWrap}>
-                  {position.code && <p className={styles.positionCodeMeta}>종목코드 {position.code}</p>}
                   <ConfirmCard
                     position={position}
                     pct={totalValue > 0 ? Math.round((position.value / totalValue) * 1000) / 10 : 0}
