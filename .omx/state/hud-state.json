@@ -1,0 +1,6 @@
+{
+  "last_turn_at": "2026-04-19T15:12:02.902Z",
+  "turn_count": 1,
+  "last_progress_at": "2026-04-19T15:12:02.902Z",
+  "last_agent_output": "**Plan**\n1. 매크로 집계 계층을 추가해 `/api/market`과 세션 캐시를 만들고, FRED/Fear&Greed/ERP를 `Risk-On/중립/Risk-Off`로 묶었"
+}

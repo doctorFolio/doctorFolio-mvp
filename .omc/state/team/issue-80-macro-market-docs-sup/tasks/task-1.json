@@ -1,0 +1,11 @@
+{
+  "subject": "Issue #80: Macro 시장 분석 엔진 + /market 페이지\n\n스펙: docs/superpowers/specs/2026-04-19-t",
+  "description": "Issue #80: Macro 시장 분석 엔진 + /market 페이지\n\n스펙: docs/superpowers/specs/2026-04-19-trading-signals-design.md (v2 섹션 2, 3)\n\n구현 내용:\n1. src/lib/marketSignals.ts — FRED API(장단기 금리차·하이일드 스프레드·M2), onoff.markets Fear&Greed, ERP 계산, Macro 점수 → Risk-On/중립/Risk-Off 판정\n2. src/lib/finalJudgment.ts — Micro 강도 × Macro 상태 매트릭스 → 분할매수/관망/주의\n3. src/app/api/market/route.ts — GET /api/market, MarketResponse 반환, s-maxage=86400\n4. src/app/market/page.tsx + CSS Module — 지표 카드, 시장 상태 배지, skeleton 로딩\n5. src/components/MarketBanner.tsx + CSS Module — /signals 상단 배너 (macroState 표시, /market 링크)\n6. src/components/MarketCard.tsx + CSS Module — 지표별 카드\n7. src/lib/types.ts 수정 — SESSION_KEYS.MARKET 추가\n8. src/app/signals/page.tsx 수정 — 배너 추가, Fear&Greed 제거, 최종 판단(분할매수/관망/주의) 적용\n9. src/lib/tradingSignals.ts 수정 — Fear&Greed 관련 코드 제거\n10. src/app/diagnosis/page.tsx 수정 — /api/market prefetch 추가\n\n수용 기준:\n- FRED_API_KEY 없으면 FRED 지표 null graceful skip\n- ERP 계산 불가 시 null graceful skip\n- 모든 외부 API 실패 시 macroState neutral fallback\n- 주린이 대상 1줄 해설 각 지표마다\n- pnpm verify 통과 후 discord-review-notify로 완료 알림",
+  "status": "completed",
+  "owner": "worker-1",
+  "id": "1",
+  "depends_on": [],
+  "version": 3,
+  "created_at": "2026-04-19T15:11:20.248Z",
+  "completed_at": "2026-04-19T15:11:30.196Z"
+}
