@@ -1,9 +1,0 @@
-{
-  "name": "worker-1",
-  "index": 1,
-  "role": "executor",
-  "assigned_tasks": [],
-  "working_dir": "/Users/kimsangho/worktrees/feat-80-macro-market-engine",
-  "worktree_path": "/Users/kimsangho/worktrees/feat-80-macro-market-engine",
-  "worktree_branch": "feat-80-macro-market-engine"
-}
