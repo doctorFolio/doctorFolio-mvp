@@ -2,3 +2,5 @@
 .next/
 node_modules/
 REVIEW*.md
+.omx
+.omc
