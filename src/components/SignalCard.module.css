@@ -1,9 +1,11 @@
 .card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 18px;
+  background:
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.72), transparent 36%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(247, 249, 255, 0.96));
+  border: 1px solid rgba(26, 35, 126, 0.1);
+  border-radius: 22px;
   padding: 18px;
-  box-shadow: 0 12px 24px rgba(18, 24, 88, 0.05);
+  box-shadow: 0 18px 36px rgba(18, 24, 88, 0.08);
 }
 
 .header {
@@ -30,52 +32,78 @@
 }
 
 .name {
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 800;
   letter-spacing: -0.03em;
   color: var(--text-1);
 }
 
-.badge {
-  flex-shrink: 0;
+.scoreBlock {
+  display: grid;
+  justify-items: end;
+  min-width: 62px;
+}
+
+.scoreValue {
+  font-size: 34px;
+  line-height: 1;
+  font-weight: 900;
+  letter-spacing: -0.06em;
+  color: var(--navy);
+}
+
+.scoreUnit {
+  margin-top: 3px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text-3);
+}
+
+.topline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.badge,
+.badgeGhost {
   border-radius: 999px;
   padding: 8px 12px;
   font-size: 12px;
   font-weight: 800;
 }
 
-.badge_accumulate {
+.badge_buy {
   background: var(--green-bg);
   color: var(--green);
 }
 
-.badge_wait {
+.badge_neutral {
   background: var(--amber-bg);
   color: var(--amber);
 }
 
-.badge_caution {
+.badge_sell {
   background: var(--red-bg);
   color: var(--red);
 }
 
+.badgeGhost {
+  background: rgba(26, 35, 126, 0.06);
+  color: var(--navy);
+}
+
 .headline {
   margin-top: 14px;
-  font-size: 14px;
-  line-height: 1.6;
-  font-weight: 700;
+  font-size: 15px;
+  line-height: 1.7;
+  font-weight: 800;
   color: var(--text-1);
 }
 
-.decisionMeta {
+.confidenceText {
   margin-top: 8px;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--text-3);
-}
-
-.headlineSub {
-  margin-top: 10px;
   font-size: 13px;
   line-height: 1.6;
   color: var(--text-2);
@@ -84,24 +112,26 @@
 .metricList {
   display: grid;
   gap: 10px;
-  margin-top: 16px;
+  margin-top: 18px;
 }
 
 .metric {
-  background: linear-gradient(180deg, rgba(232, 234, 246, 0.65), rgba(244, 246, 255, 0.3));
+  background: linear-gradient(180deg, rgba(233, 236, 249, 0.72), rgba(246, 248, 255, 0.4));
   border: 1px solid rgba(26, 35, 126, 0.08);
-  border-radius: 14px;
+  border-radius: 16px;
   padding: 14px;
 }
 
-.metricTop {
+.metricTop,
+.expertTop {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
 }
 
-.metricLabel {
+.metricLabel,
+.expertLabel {
   font-size: 13px;
   font-weight: 800;
   color: var(--navy);
@@ -124,9 +154,83 @@
   color: var(--red);
 }
 
-.metricSummary {
+.metricSummary,
+.expertDescription {
   margin-top: 8px;
   font-size: 13px;
   line-height: 1.6;
   color: var(--text-2);
+}
+
+.metricMeta,
+.expertStatus {
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-3);
+}
+
+.expertPanel {
+  margin-top: 16px;
+  border: 1px solid rgba(26, 35, 126, 0.1);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.8);
+  overflow: hidden;
+}
+
+.expertToggle {
+  list-style: none;
+  cursor: pointer;
+  padding: 14px 16px;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--navy);
+}
+
+.expertToggle::-webkit-details-marker {
+  display: none;
+}
+
+.expertToggle::after {
+  content: '▾';
+  float: right;
+  color: var(--text-3);
+}
+
+.expertPanel[open] .expertToggle::after {
+  content: '▴';
+}
+
+.expertList {
+  display: grid;
+  gap: 10px;
+  padding: 0 14px 14px;
+}
+
+.expertMetric,
+.referenceMetric {
+  border-radius: 14px;
+  padding: 14px;
+  background: rgba(244, 246, 255, 0.72);
+  border: 1px solid rgba(26, 35, 126, 0.07);
+}
+
+.expertValue {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text-1);
+}
+
+.referenceBlock {
+  display: grid;
+  gap: 10px;
+}
+
+.referenceTitle {
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-3);
 }
