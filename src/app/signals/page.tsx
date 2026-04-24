@@ -2,13 +2,9 @@
 
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import { useRouter } from 'next/navigation'
-import { resolveFinalJudgment } from '@/lib/finalJudgment'
-import { loadMarketSignals } from '@/lib/marketSignalsClient'
 import { SignalCard } from '@/components/SignalCard'
-import { MarketBanner } from '@/components/MarketBanner'
 import { listSignalTargets, loadTradingSignals } from '@/lib/tradingSignalsClient'
 import { SESSION_KEYS, type PortfolioPosition } from '@/lib/types'
-import type { MarketResponse } from '@/lib/marketSignals'
 import type { TradingSignal } from '@/lib/tradingSignals'
 import styles from './page.module.css'
 
@@ -46,11 +42,8 @@ export default function SignalsPage() {
   )
   const positions = useMemo(() => (isClient ? readConfirmedPositions() : []), [isClient])
   const [signals, setSignals] = useState<TradingSignal[]>([])
-  const [market, setMarket] = useState<MarketResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [marketLoading, setMarketLoading] = useState(true)
-  const [marketError, setMarketError] = useState<string | null>(null)
   const supportedCount = useMemo(() => listSignalTargets(positions).length, [positions])
   const unsupportedCount = Math.max(
     positions.filter(position => position.assetClass === '국내주식' || position.assetClass === '해외주식').length - supportedCount,
@@ -60,8 +53,6 @@ export default function SignalsPage() {
   async function handleRefresh() {
     setLoading(true)
     setError(null)
-    setMarketLoading(true)
-    setMarketError(null)
 
     try {
       setSignals(await loadTradingSignals(positions))
@@ -69,14 +60,6 @@ export default function SignalsPage() {
       setError('종목 시그널을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.')
     } finally {
       setLoading(false)
-    }
-
-    try {
-      setMarket(await loadMarketSignals(true))
-    } catch {
-      setMarketError('거시 지표를 바로 불러오지 못했어요.')
-    } finally {
-      setMarketLoading(false)
     }
   }
 
@@ -102,15 +85,6 @@ export default function SignalsPage() {
       } finally {
         if (active) setLoading(false)
       }
-
-      try {
-        const nextMarket = await loadMarketSignals()
-        if (active) setMarket(nextMarket)
-      } catch {
-        if (active) setMarketError('거시 지표를 바로 불러오지 못했어요.')
-      } finally {
-        if (active) setMarketLoading(false)
-      }
     }
 
     void hydrateSignals()
@@ -126,9 +100,9 @@ export default function SignalsPage() {
     <div className={styles.wrap}>
       <div className={styles.header}>
         <div className={styles.eyebrow}>종목 시그널 분석</div>
-        <h1 className={styles.title}>각 종목이 지금 보내는 신호를 한 번에 확인해보세요.</h1>
+        <h1 className={styles.title}>각 종목의 진입 타이밍을 점수와 설명으로 확인해보세요.</h1>
         <p className={styles.sub}>
-          RSI, MACD, 거래량, 52주 위치, 6개월 평균, 내부자 매매를 종목 카드에 담고, 위에는 오늘 시장 온도를 따로 얹어 보여드려요.
+          RSI, MACD, 거래량, 52주 위치로 종목 점수를 만들고, 6개월 평균과 내부자 매매는 참고 지표로 따로 보여드려요.
         </p>
         <div className={styles.metaRow}>
           <span className={styles.metaBadge}>분석 가능 {supportedCount}종목</span>
@@ -137,8 +111,6 @@ export default function SignalsPage() {
       </div>
 
       <div className={styles.body}>
-        <MarketBanner error={marketError} loading={marketLoading} market={market} />
-
         <div className={styles.actions}>
           <button className={styles.secondaryButton} onClick={() => router.push('/diagnosis')}>
             ← 진단 결과로 돌아가기
@@ -169,7 +141,6 @@ export default function SignalsPage() {
           {signals.map(signal => (
             <SignalCard
               key={`${signal.market}:${signal.ticker}`}
-              judgment={resolveFinalJudgment(market?.macroState ?? 'neutral', signal)}
               signal={signal}
             />
           ))}
