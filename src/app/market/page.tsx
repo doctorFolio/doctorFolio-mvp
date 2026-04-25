@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { BottomNav } from '@/components/BottomNav'
 import { MarketCard } from '@/components/MarketCard'
-import { deriveCycleStage, type CycleStage } from '@/lib/cycleStage'
+import { buildMarketInsight } from '@/lib/marketInsightTemplates'
 import type { MarketResponse } from '@/lib/marketSignals'
 import { loadMarketSignals } from '@/lib/marketSignalsClient'
 import styles from './page.module.css'
@@ -52,6 +52,9 @@ export default function MarketPage() {
 
   const entry = market?.overview.entry
   const health = market?.overview.health
+  const insight = market && entry && health
+    ? buildMarketInsight(entry.score, health.score)
+    : null
   const orderedIndicators = market
     ? [...market.indicators].sort(
       (left, right) => INDICATOR_ORDER.indexOf(left.key) - INDICATOR_ORDER.indexOf(right.key),
@@ -111,10 +114,10 @@ export default function MarketPage() {
                 <span className={styles.healthScore}>{health.score}/100</span>
               </div>
 
-              {entry.guide && (
+              {insight && (
                 <div className={styles.implication}>
-                  <div className={styles.implicationLabel}>투자 시사점</div>
-                  <p className={styles.implicationText}>{entry.guide}</p>
+                  <div className={styles.implicationLabel}>{insight.title}</div>
+                  <p className={styles.implicationText}>{insight.message}</p>
                 </div>
               )}
             </section>

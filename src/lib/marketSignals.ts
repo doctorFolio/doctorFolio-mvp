@@ -808,6 +808,78 @@ function buildHealthKPI(score: number): MarketEntryKPI {
   }
 }
 
+type KPIBand = 'high' | 'midHigh' | 'mid' | 'midLow' | 'low'
+
+function buildEntryKPIContent(band: KPIBand): Pick<MarketEntryKPI, 'guide' | 'summary'> {
+  if (band === 'high') {
+    return {
+      guide: '천천히 분할로 접근해도 좋아요.',
+      summary: '시장 리스크가 크지 않고 주식의 상대 매력도도 괜찮은 편이에요. 종목별로 분할 접근을 검토하기 좋은 구간이에요.',
+    }
+  }
+
+  if (band === 'midHigh') {
+    return {
+      guide: '분할 진입을 전제로만 살펴보세요.',
+      summary: '시장 불안 요소가 일부 있지만, 분할로 접근하면 기회를 노려볼 수 있는 구간이에요.',
+    }
+  }
+
+  if (band === 'mid') {
+    return {
+      guide: '한 템포 지켜보는 편이 좋아요.',
+      summary: '시장 방향이 뚜렷하지 않아 조금 더 지켜보는 전략이 좋아요.',
+    }
+  }
+
+  if (band === 'midLow') {
+    return {
+      guide: '신규 진입은 속도를 늦추세요.',
+      summary: '변동성이 커질 수 있는 구간이라 신규 진입은 신중하게 접근하는 게 좋아요.',
+    }
+  }
+
+  return {
+    guide: '지금은 리스크 관리가 먼저예요.',
+    summary: '시장 리스크가 높은 구간이에요. 지금은 기회보다 리스크 관리가 더 중요한 시점이에요.',
+  }
+}
+
+function buildHealthKPIContent(band: KPIBand): Pick<MarketEntryKPI, 'guide' | 'summary'> {
+  if (band === 'high') {
+    return {
+      guide: '시장 환경을 안정적으로 볼 수 있어요.',
+      summary: '시장 환경이 전반적으로 안정적인 상태예요.',
+    }
+  }
+
+  if (band === 'midHigh') {
+    return {
+      guide: '일부 변수는 계속 확인하세요.',
+      summary: '시장 리스크는 크지 않지만 일부 변수는 확인이 필요해요.',
+    }
+  }
+
+  if (band === 'mid') {
+    return {
+      guide: '방향이 잡힐 때까지 기다려도 돼요.',
+      summary: '시장 방향성이 뚜렷하지 않은 구간이에요.',
+    }
+  }
+
+  if (band === 'midLow') {
+    return {
+      guide: '변동성 확대를 먼저 의식하세요.',
+      summary: '시장 변동성이 커지고 있는 구간이에요.',
+    }
+  }
+
+  return {
+    guide: '방어적으로 보는 편이 맞아요.',
+    summary: '시장 불안이 큰 상태로 리스크 관리가 중요한 구간이에요.',
+  }
+}
+
 function buildOverview(input: MarketInput): MarketOverview {
   const entryScore = calculateEntryAttractiveness(input)
   const healthScore = calculateMarketHealth(input)
