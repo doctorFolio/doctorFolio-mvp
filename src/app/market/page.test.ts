@@ -1,5 +1,6 @@
-import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
+import { deriveCycleStage } from '@/lib/cycleStage'
+import type { MarketResponse } from '@/lib/marketSignals'
 
 describe('MarketPage source', () => {
   it('시장 페이지를 KPI 상단과 5가지 신호 상세 구조로 유지한다', () => {

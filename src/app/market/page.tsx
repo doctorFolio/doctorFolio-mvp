@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { BottomNav } from '@/components/BottomNav'
 import { MarketCard } from '@/components/MarketCard'
+import { deriveCycleStage, type CycleStage } from '@/lib/cycleStage'
 import type { MarketResponse } from '@/lib/marketSignals'
 import { loadMarketSignals } from '@/lib/marketSignalsClient'
 import styles from './page.module.css'
