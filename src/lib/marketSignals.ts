@@ -7,6 +7,9 @@ export interface FearGreedSnapshot {
 }
 
 export interface MarketIndicator {
+  detailSource: string
+  detailTitle: string
+  detailValue: string
   guide: string
   key: 'yieldCurve' | 'creditSpread' | 'm2' | 'fearGreed' | 'erp'
   label: string
@@ -46,6 +49,7 @@ export interface MarketInput {
 
 interface MarketSnapshotInput {
   equityRiskPremium: number | null
+  peRatio?: number | null
   fearGreed: FearGreedSnapshot | null
   fetchedAt?: string
   highYieldSpread: number | null
@@ -81,6 +85,7 @@ export async function fetchMarketSignals(): Promise<MarketResponse> {
 
   return buildMarketResponse({
     equityRiskPremium,
+    peRatio: await fetchPeRatio().catch(() => null),
     fearGreed,
     highYieldSpread: fredData.highYieldSpread,
     m2YearOverYear: fredData.m2YearOverYear,
@@ -95,11 +100,11 @@ export function buildMarketResponse(input: MarketSnapshotInput): MarketResponse 
     : null
 
   const indicators: MarketIndicator[] = [
-    buildYieldCurveIndicator(yieldCurveSpread),
+    buildYieldCurveIndicator(yieldCurveSpread, input.treasury10YearRate, input.treasury2YearRate),
     buildCreditSpreadIndicator(input.highYieldSpread),
     buildM2Indicator(input.m2YearOverYear),
     buildFearGreedIndicator(input.fearGreed),
-    buildEquityRiskPremiumIndicator(input.equityRiskPremium),
+    buildEquityRiskPremiumIndicator(input.equityRiskPremium, input.peRatio ?? null, input.treasury10YearRate),
   ]
 
   const scoredIndicators = indicators.filter(indicator => indicator.status !== 'unavailable')
@@ -206,6 +211,14 @@ async function fetchFredSeries(seriesId: string, apiKey: string, limit: number):
 async function fetchEquityRiskPremium(treasury10YearRate: number | null): Promise<number | null> {
   if (treasury10YearRate === null) return null
 
+  const peRatio = await fetchPeRatio()
+  if (peRatio === null || peRatio <= 0) return null
+
+  const earningsYield = 100 / peRatio
+  return roundToTwo(earningsYield - treasury10YearRate)
+}
+
+async function fetchPeRatio(): Promise<number | null> {
   const response = await fetch('https://www.multpl.com/s-p-500-pe-ratio', {
     headers: MARKET_HEADERS,
   })
@@ -215,10 +228,7 @@ async function fetchEquityRiskPremium(treasury10YearRate: number | null): Promis
   }
 
   const peRatio = extractSp500PeRatio(await response.text())
-  if (peRatio === null || peRatio <= 0) return null
-
-  const earningsYield = 100 / peRatio
-  return roundToTwo(earningsYield - treasury10YearRate)
+  return peRatio === null || peRatio <= 0 ? null : peRatio
 }
 
 function getLatestNumericValue(observations: FredObservation[]): number | null {
@@ -250,7 +260,11 @@ function computeM2YearOverYear(observations: FredObservation[]): number | null {
   return roundToTwo(((latest.value - oneYearAgo.value) / oneYearAgo.value) * 100)
 }
 
-function buildYieldCurveIndicator(spread: number | null): MarketIndicator {
+function buildYieldCurveIndicator(
+  spread: number | null,
+  treasury10YearRate: number | null,
+  treasury2YearRate: number | null,
+): MarketIndicator {
   if (spread === null) {
     return buildUnavailableIndicator(
       'yieldCurve',
@@ -265,7 +279,14 @@ function buildYieldCurveIndicator(spread: number | null): MarketIndicator {
       key: 'yieldCurve',
       label: '장단기 금리차',
       status: 'negative',
-      summary: '장단기 금리가 뒤집혀 있어 경기 둔화 경고가 커진 구간으로 읽혀요.',
+      summary: spread < -0.5
+        ? '단기 금리가 장기 금리보다 높아요. 과거에는 경기 둔화 전에 자주 나타났던 신호예요. 시장 전반의 리스크를 조금 더 신중하게 보는 게 좋아요.'
+        : '금리 구조가 일부 뒤집힌 상태예요. 경기 흐름에 대한 불확실성이 있는 구간이에요. 지금은 공격적인 투자보다는 안정적인 접근이 어울려요.',
+      ...buildDetailBox(
+        '장단기 금리차 (10Y−2Y)',
+        `출처: FRED | DGS10 ${formatPercent(treasury10YearRate)} − DGS2 ${formatPercent(treasury2YearRate)} = ${formatSignedNumber(spread)}%p`,
+        `실제 값: ${formatSignedNumber(spread)}%p`,
+      ),
       value: `${formatSignedNumber(spread)}%p`,
     }
   }
@@ -276,7 +297,14 @@ function buildYieldCurveIndicator(spread: number | null): MarketIndicator {
       key: 'yieldCurve',
       label: '장단기 금리차',
       status: 'positive',
-      summary: '장기금리가 단기금리보다 충분히 높아 경기 침체 경고는 약한 편이에요.',
+      summary: spread > 1.5
+        ? '금리 차이가 크게 벌어진 상태예요. 경기 기대가 반영된 흐름이에요. 다만 금리 부담도 함께 커질 수 있어 주의가 필요해요.'
+        : '장기 금리가 단기 금리보다 높아 정상적인 구조예요. 경기 흐름도 비교적 안정적인 편이에요. 시장 전반의 리스크는 크지 않은 상태로 볼 수 있어요.',
+      ...buildDetailBox(
+        '장단기 금리차 (10Y−2Y)',
+        `출처: FRED | DGS10 ${formatPercent(treasury10YearRate)} − DGS2 ${formatPercent(treasury2YearRate)} = ${formatSignedNumber(spread)}%p`,
+        `실제 값: ${formatSignedNumber(spread)}%p`,
+      ),
       value: `${formatSignedNumber(spread)}%p`,
     }
   }
@@ -286,7 +314,12 @@ function buildYieldCurveIndicator(spread: number | null): MarketIndicator {
     key: 'yieldCurve',
     label: '장단기 금리차',
     status: 'neutral',
-    summary: '금리차가 플러스이긴 하지만 크진 않아 경기를 더 지켜볼 구간이에요.',
+    summary: '장단기 금리 차이가 거의 없는 상태예요. 시장이 방향을 잡는 중일 수 있어요. 조금 더 지켜보면서 대응하는 게 좋아요.',
+    ...buildDetailBox(
+      '장단기 금리차 (10Y−2Y)',
+      `출처: FRED | DGS10 ${formatPercent(treasury10YearRate)} − DGS2 ${formatPercent(treasury2YearRate)} = ${formatSignedNumber(spread)}%p`,
+      `실제 값: ${formatSignedNumber(spread)}%p`,
+    ),
     value: `${formatSignedNumber(spread)}%p`,
   }
 }
@@ -306,7 +339,16 @@ function buildCreditSpreadIndicator(spread: number | null): MarketIndicator {
       key: 'creditSpread',
       label: '하이일드 스프레드',
       status: 'negative',
-      summary: '위험한 회사채 금리가 많이 벌어져 시장이 리스크를 크게 경계하는 모습이에요.',
+      summary: spread > 10
+        ? '기업 신용 위험이 크게 확대된 상태예요. 시장이 위기 상황을 반영하고 있어요. 지금은 기회보다 리스크 관리가 중요한 구간이에요.'
+        : spread >= 7
+          ? '기업 부도 위험이 높아지고 있는 상태예요. 시장 리스크를 우선적으로 관리하는 것이 중요해요.'
+          : '기업 신용에 대한 불안이 조금씩 반영되고 있어요. 시장 변동성이 커질 수 있는 구간이에요.',
+      ...buildDetailBox(
+        '하이일드 스프레드',
+        `출처: FRED | BAMLH0A0HYM2 ${formatNumber(spread)}%p`,
+        `실제 값: ${formatNumber(spread)}%p`,
+      ),
       value: `${formatNumber(spread)}%p`,
     }
   }
@@ -317,7 +359,12 @@ function buildCreditSpreadIndicator(spread: number | null): MarketIndicator {
       key: 'creditSpread',
       label: '하이일드 스프레드',
       status: 'positive',
-      summary: '스프레드가 낮아 위험자산을 받아들이는 심리가 비교적 편안한 편이에요.',
+      summary: '기업 신용 위험이 낮은 상태예요. 시장이 안정적으로 평가되고 있어요. 리스크 부담은 크지 않은 구간이에요.',
+      ...buildDetailBox(
+        '하이일드 스프레드',
+        `출처: FRED | BAMLH0A0HYM2 ${formatNumber(spread)}%p`,
+        `실제 값: ${formatNumber(spread)}%p`,
+      ),
       value: `${formatNumber(spread)}%p`,
     }
   }
@@ -327,7 +374,12 @@ function buildCreditSpreadIndicator(spread: number | null): MarketIndicator {
     key: 'creditSpread',
     label: '하이일드 스프레드',
     status: 'neutral',
-    summary: '스프레드가 살짝 올라와 있어 낙관과 경계가 섞인 구간으로 보여요.',
+    summary: '기업 부도 위험이 크게 높지 않은 상태예요. 시장 전반은 비교적 안정적인 흐름을 보이고 있어요.',
+    ...buildDetailBox(
+      '하이일드 스프레드',
+      `출처: FRED | BAMLH0A0HYM2 ${formatNumber(spread)}%p`,
+      `실제 값: ${formatNumber(spread)}%p`,
+    ),
     value: `${formatNumber(spread)}%p`,
   }
 }
@@ -347,7 +399,12 @@ function buildM2Indicator(yearOverYear: number | null): MarketIndicator {
       key: 'm2',
       label: 'M2 증가율',
       status: 'negative',
-      summary: '시중 유동성이 작년보다 줄어 위험자산에 우호적인 돈의 흐름은 약한 편이에요.',
+      summary: '시중에 도는 돈이 줄어들고 있어요. 시장 유동성이 위축된 상태예요. 위험자산에는 부담이 될 수 있어요.',
+      ...buildDetailBox(
+        'M2 증가율 (YoY)',
+        `출처: FRED | M2SL 전년동월 대비 ${formatSignedNumber(yearOverYear)}%`,
+        `실제 값: ${formatSignedNumber(yearOverYear)}%`,
+      ),
       value: `${formatSignedNumber(yearOverYear)}%`,
     }
   }
@@ -358,7 +415,16 @@ function buildM2Indicator(yearOverYear: number | null): MarketIndicator {
       key: 'm2',
       label: 'M2 증가율',
       status: 'positive',
-      summary: '시중 유동성이 다시 늘어나는 흐름이라 주식시장에 숨통이 트일 수 있어요.',
+      summary: yearOverYear >= 12
+        ? '유동성이 과도하게 증가한 상태예요. 시장에 자금이 많이 풀린 구간이에요. 장기적으로는 인플레이션 부담도 함께 고려해야 해요.'
+        : yearOverYear >= 7
+          ? '시장에 돈이 비교적 충분히 공급되고 있어요. 위험자산에 우호적인 환경이에요.'
+          : '시중 유동성이 안정적인 수준이에요. 시장에 특별한 부담이나 과열 신호는 없어요.',
+      ...buildDetailBox(
+        'M2 증가율 (YoY)',
+        `출처: FRED | M2SL 전년동월 대비 ${formatSignedNumber(yearOverYear)}%`,
+        `실제 값: ${formatSignedNumber(yearOverYear)}%`,
+      ),
       value: `${formatSignedNumber(yearOverYear)}%`,
     }
   }
@@ -368,7 +434,12 @@ function buildM2Indicator(yearOverYear: number | null): MarketIndicator {
     key: 'm2',
     label: 'M2 증가율',
     status: 'neutral',
-    summary: '유동성이 줄진 않지만 강하게 늘지도 않아 중립적인 자금 환경으로 보여요.',
+    summary: '유동성 증가가 둔화된 상태예요. 시장에 자금 유입이 제한적이에요. 상승 동력이 약해질 수 있어요.',
+    ...buildDetailBox(
+      'M2 증가율 (YoY)',
+      `출처: FRED | M2SL 전년동월 대비 ${formatSignedNumber(yearOverYear)}%`,
+      `실제 값: ${formatSignedNumber(yearOverYear)}%`,
+    ),
     value: `${formatSignedNumber(yearOverYear)}%`,
   }
 }
@@ -388,7 +459,14 @@ function buildFearGreedIndicator(snapshot: FearGreedSnapshot | null): MarketIndi
       key: 'fearGreed',
       label: 'Fear&Greed',
       status: 'negative',
-      summary: `심리가 ${snapshot.label} 쪽이라 투자자들이 방어적으로 움직이는 분위기예요.`,
+      summary: snapshot.score <= 20
+        ? '투자자들이 많이 위축된 상태예요. 시장에 대한 불안이 큰 구간이에요. 이런 시기에는 단기 변동성이 크지만, 장기적으로는 기회가 생기기도 해요.'
+        : '투자자들이 조심스럽게 움직이고 있어요. 시장에 대한 불안이 남아 있는 상태예요. 지금은 서두르기보다 천천히 접근하는 전략이 어울려요.',
+      ...buildDetailBox(
+        'Fear & Greed Index',
+        `출처: onoff.markets | ${snapshot.label} ${formatNumber(snapshot.score)}`,
+        `실제 값: ${snapshot.label} ${formatNumber(snapshot.score)}`,
+      ),
       value: `${snapshot.label} ${formatNumber(snapshot.score)}`,
     }
   }
@@ -399,7 +477,14 @@ function buildFearGreedIndicator(snapshot: FearGreedSnapshot | null): MarketIndi
       key: 'fearGreed',
       label: 'Fear&Greed',
       status: 'positive',
-      summary: `심리가 ${snapshot.label} 쪽이라 위험자산을 받아들이는 흐름이 살아 있어요.`,
+      summary: snapshot.score >= 80
+        ? '투자자들이 과하게 낙관적인 상태예요. 시장이 많이 달아오른 구간이에요. 이런 시기에는 추격 매수보다 과열 여부를 꼭 점검해야 해요.'
+        : '투자자들이 점점 낙관적으로 바뀌고 있어요. 시장에 기대감이 커지고 있어요. 너무 빠르게 오른 종목은 단기 부담을 함께 확인하는 게 좋아요.',
+      ...buildDetailBox(
+        'Fear & Greed Index',
+        `출처: onoff.markets | ${snapshot.label} ${formatNumber(snapshot.score)}`,
+        `실제 값: ${snapshot.label} ${formatNumber(snapshot.score)}`,
+      ),
       value: `${snapshot.label} ${formatNumber(snapshot.score)}`,
     }
   }
@@ -409,12 +494,21 @@ function buildFearGreedIndicator(snapshot: FearGreedSnapshot | null): MarketIndi
     key: 'fearGreed',
     label: 'Fear&Greed',
     status: 'neutral',
-    summary: '심리가 한쪽으로 크게 치우치지 않아 시장 참여자들이 서로 눈치를 보는 구간이에요.',
+    summary: '투자 심리가 크게 치우치지 않은 상태예요. 낙관도 비관도 강하지 않아요. 이런 구간에서는 종목별 흐름이 더 중요해요.',
+    ...buildDetailBox(
+      'Fear & Greed Index',
+      `출처: onoff.markets | ${snapshot.label} ${formatNumber(snapshot.score)}`,
+      `실제 값: ${snapshot.label} ${formatNumber(snapshot.score)}`,
+    ),
     value: `${snapshot.label} ${formatNumber(snapshot.score)}`,
   }
 }
 
-function buildEquityRiskPremiumIndicator(equityRiskPremium: number | null): MarketIndicator {
+function buildEquityRiskPremiumIndicator(
+  equityRiskPremium: number | null,
+  peRatio: number | null,
+  treasury10YearRate: number | null,
+): MarketIndicator {
   if (equityRiskPremium === null) {
     return buildUnavailableIndicator(
       'erp',
@@ -429,7 +523,12 @@ function buildEquityRiskPremiumIndicator(equityRiskPremium: number | null): Mark
       key: 'erp',
       label: 'ERP',
       status: 'negative',
-      summary: '채권 금리 매력이 더 커 보여 주식에 높은 점수를 주기 어려운 구간이에요.',
+      summary: '주식이 채권이나 예금 대비 충분히 매력적이지 않은 구간이에요. 지금은 무리하게 주식 비중을 늘리기보다 신중한 접근이 좋아요.',
+      ...buildDetailBox(
+        'ERP (주식−채권 상대매력)',
+        buildErpSourceLine(peRatio, treasury10YearRate, equityRiskPremium),
+        `실제 값: ${formatSignedNumber(equityRiskPremium)}%p`,
+      ),
       value: `${formatSignedNumber(equityRiskPremium)}%p`,
     }
   }
@@ -440,7 +539,16 @@ function buildEquityRiskPremiumIndicator(equityRiskPremium: number | null): Mark
       key: 'erp',
       label: 'ERP',
       status: 'positive',
-      summary: '주식 기대수익이 채권보다 충분히 높아 상대가치 측면에선 주식이 괜찮아 보여요.',
+      summary: equityRiskPremium >= 6
+        ? '주식의 기대 수익이 크게 높은 구간이에요. 시장이 리스크를 반영하고 있을 수 있어요. 기회가 있을 수 있지만, 리스크도 함께 확인하는 게 중요해요.'
+        : equityRiskPremium >= 4
+          ? '주식이 채권보다 더 높은 보상을 기대할 수 있는 구간이에요. 분할로 접근해볼 수 있는 환경이에요.'
+          : '주식과 채권의 매력도가 크게 차이나지 않는 구간이에요. 종목 선택이 중요한 시기예요.',
+      ...buildDetailBox(
+        'ERP (주식−채권 상대매력)',
+        buildErpSourceLine(peRatio, treasury10YearRate, equityRiskPremium),
+        `실제 값: ${formatSignedNumber(equityRiskPremium)}%p`,
+      ),
       value: `${formatSignedNumber(equityRiskPremium)}%p`,
     }
   }
@@ -450,7 +558,14 @@ function buildEquityRiskPremiumIndicator(equityRiskPremium: number | null): Mark
     key: 'erp',
     label: 'ERP',
     status: 'neutral',
-    summary: '주식과 채권 매력 차이가 크지 않아 밸류에이션만으로 방향을 정하긴 어려워요.',
+    summary: equityRiskPremium < 1
+      ? '주식이 채권이나 예금 대비 충분히 매력적이지 않은 구간이에요. 지금은 무리하게 주식 비중을 늘리기보다 신중한 접근이 좋아요.'
+      : '주식의 상대 매력도가 다소 낮은 상태예요. 가격 부담을 함께 고려하면서 투자하는 게 좋아요.',
+    ...buildDetailBox(
+      'ERP (주식−채권 상대매력)',
+      buildErpSourceLine(peRatio, treasury10YearRate, equityRiskPremium),
+      `실제 값: ${formatSignedNumber(equityRiskPremium)}%p`,
+    ),
     value: `${formatSignedNumber(equityRiskPremium)}%p`,
   }
 }
@@ -461,6 +576,9 @@ function buildUnavailableIndicator(
   guide: string,
 ): MarketIndicator {
   return {
+    detailSource: '출처: 외부 데이터 연결 실패',
+    detailTitle: label,
+    detailValue: '실제 값: 데이터 없음',
     guide,
     key,
     label,
@@ -502,6 +620,10 @@ function formatNumber(value: number): string {
 
 function formatSignedNumber(value: number): string {
   return `${value >= 0 ? '+' : ''}${formatNumber(value)}`
+}
+
+function formatPercent(value: number | null): string {
+  return value === null ? '-' : `${formatNumber(value)}%`
 }
 
 function buildEntryKPI(score: number): MarketEntryKPI {
@@ -689,4 +811,18 @@ function weightedAverage(entries: Array<[number, number]>): number {
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max)
+}
+
+function buildErpSourceLine(peRatio: number | null, treasury10YearRate: number | null, erp: number): string {
+  const earningsYield = peRatio && peRatio > 0 ? roundToTwo(100 / peRatio) : null
+
+  return `출처: multpl.com + FRED | Earnings Yield ${formatPercent(earningsYield)} − DGS10 ${formatPercent(treasury10YearRate)} = ${formatSignedNumber(erp)}%p`
+}
+
+function buildDetailBox(detailTitle: string, detailSource: string, detailValue: string) {
+  return {
+    detailSource,
+    detailTitle,
+    detailValue,
+  }
 }
