@@ -275,15 +275,13 @@ function buildYieldCurveIndicator(
     )
   }
 
-  if (spread < 0) {
+  if (spread < -0.5) {
     return {
       guide: '장기금리가 단기금리보다 높으면 보통 경기 기대가 더 건강하다고 봐요.',
       key: 'yieldCurve',
       label: '장단기 금리차',
       status: 'negative',
-      summary: spread < -0.5
-        ? '단기 금리가 장기 금리보다 높아요. 과거에는 경기 둔화 전에 자주 나타났던 신호예요. 시장 전반의 리스크를 조금 더 신중하게 보는 게 좋아요.'
-        : '금리 구조가 일부 뒤집힌 상태예요. 경기 흐름에 대한 불확실성이 있는 구간이에요. 지금은 공격적인 투자보다는 안정적인 접근이 어울려요.',
+      summary: '단기 금리가 장기 금리보다 높아요. 과거에는 경기 둔화 전에 자주 나타났던 신호예요. 시장 전반의 리스크를 조금 더 신중하게 보는 게 좋아요.',
       ...buildDetailBox(
         '장단기 금리차 (10Y−2Y)',
         `출처: FRED | DGS10 ${formatPercent(treasury10YearRate)} − DGS2 ${formatPercent(treasury2YearRate)} = ${formatSignedNumber(spread)}%p`,
@@ -293,15 +291,45 @@ function buildYieldCurveIndicator(
     }
   }
 
-  if (spread >= 0.5) {
+  if (spread < 0) {
+    return {
+      guide: '장기금리가 단기금리보다 높으면 보통 경기 기대가 더 건강하다고 봐요.',
+      key: 'yieldCurve',
+      label: '장단기 금리차',
+      status: 'negative',
+      summary: '금리 구조가 일부 뒤집힌 상태예요. 경기 흐름에 대한 불확실성이 있는 구간이에요. 지금은 공격적인 투자보다는 안정적인 접근이 어울려요.',
+      ...buildDetailBox(
+        '장단기 금리차 (10Y−2Y)',
+        `출처: FRED | DGS10 ${formatPercent(treasury10YearRate)} − DGS2 ${formatPercent(treasury2YearRate)} = ${formatSignedNumber(spread)}%p`,
+        `실제 값: ${formatSignedNumber(spread)}%p`,
+      ),
+      value: `${formatSignedNumber(spread)}%p`,
+    }
+  }
+
+  if (spread < 0.5) {
+    return {
+      guide: '장기금리가 단기금리보다 높으면 보통 경기 기대가 더 건강하다고 봐요.',
+      key: 'yieldCurve',
+      label: '장단기 금리차',
+      status: 'neutral',
+      summary: '장단기 금리 차이가 거의 없는 상태예요. 시장이 방향을 잡는 중일 수 있어요. 조금 더 지켜보면서 대응하는 게 좋아요.',
+      ...buildDetailBox(
+        '장단기 금리차 (10Y−2Y)',
+        `출처: FRED | DGS10 ${formatPercent(treasury10YearRate)} − DGS2 ${formatPercent(treasury2YearRate)} = ${formatSignedNumber(spread)}%p`,
+        `실제 값: ${formatSignedNumber(spread)}%p`,
+      ),
+      value: `${formatSignedNumber(spread)}%p`,
+    }
+  }
+
+  if (spread < 1.5) {
     return {
       guide: '장기금리가 단기금리보다 높으면 보통 경기 기대가 더 건강하다고 봐요.',
       key: 'yieldCurve',
       label: '장단기 금리차',
       status: 'positive',
-      summary: spread > 1.5
-        ? '금리 차이가 크게 벌어진 상태예요. 경기 기대가 반영된 흐름이에요. 다만 금리 부담도 함께 커질 수 있어 주의가 필요해요.'
-        : '장기 금리가 단기 금리보다 높아 정상적인 구조예요. 경기 흐름도 비교적 안정적인 편이에요. 시장 전반의 리스크는 크지 않은 상태로 볼 수 있어요.',
+      summary: '장기 금리가 단기 금리보다 높아 정상적인 구조예요. 경기 흐름도 비교적 안정적인 편이에요. 시장 전반의 리스크는 크지 않은 상태로 볼 수 있어요.',
       ...buildDetailBox(
         '장단기 금리차 (10Y−2Y)',
         `출처: FRED | DGS10 ${formatPercent(treasury10YearRate)} − DGS2 ${formatPercent(treasury2YearRate)} = ${formatSignedNumber(spread)}%p`,
@@ -315,8 +343,8 @@ function buildYieldCurveIndicator(
     guide: '장기금리가 단기금리보다 높으면 보통 경기 기대가 더 건강하다고 봐요.',
     key: 'yieldCurve',
     label: '장단기 금리차',
-    status: 'neutral',
-    summary: '장단기 금리 차이가 거의 없는 상태예요. 시장이 방향을 잡는 중일 수 있어요. 조금 더 지켜보면서 대응하는 게 좋아요.',
+    status: 'positive',
+    summary: '금리 차이가 크게 벌어진 상태예요. 경기 기대가 반영된 흐름이에요. 다만 금리 부담도 함께 커질 수 있어 주의가 필요해요.',
     ...buildDetailBox(
       '장단기 금리차 (10Y−2Y)',
       `출처: FRED | DGS10 ${formatPercent(treasury10YearRate)} − DGS2 ${formatPercent(treasury2YearRate)} = ${formatSignedNumber(spread)}%p`,
@@ -335,27 +363,7 @@ function buildCreditSpreadIndicator(spread: number | null): MarketIndicator {
     )
   }
 
-  if (spread > 5.5) {
-    return {
-      guide: '위험한 회사채 금리가 국채보다 얼마나 더 비싼지 보면 시장 긴장을 알 수 있어요.',
-      key: 'creditSpread',
-      label: '하이일드 스프레드',
-      status: 'negative',
-      summary: spread > 10
-        ? '기업 신용 위험이 크게 확대된 상태예요. 시장이 위기 상황을 반영하고 있어요. 지금은 기회보다 리스크 관리가 중요한 구간이에요.'
-        : spread >= 7
-          ? '기업 부도 위험이 높아지고 있는 상태예요. 시장 리스크를 우선적으로 관리하는 것이 중요해요.'
-          : '기업 신용에 대한 불안이 조금씩 반영되고 있어요. 시장 변동성이 커질 수 있는 구간이에요.',
-      ...buildDetailBox(
-        '하이일드 스프레드',
-        `출처: FRED | BAMLH0A0HYM2 ${formatNumber(spread)}%p`,
-        `실제 값: ${formatNumber(spread)}%p`,
-      ),
-      value: `${formatNumber(spread)}%p`,
-    }
-  }
-
-  if (spread <= 3.5) {
+  if (spread < 3.5) {
     return {
       guide: '위험한 회사채 금리가 국채보다 얼마나 더 비싼지 보면 시장 긴장을 알 수 있어요.',
       key: 'creditSpread',
@@ -371,12 +379,60 @@ function buildCreditSpreadIndicator(spread: number | null): MarketIndicator {
     }
   }
 
+  if (spread < 5) {
+    return {
+      guide: '위험한 회사채 금리가 국채보다 얼마나 더 비싼지 보면 시장 긴장을 알 수 있어요.',
+      key: 'creditSpread',
+      label: '하이일드 스프레드',
+      status: 'positive',
+      summary: '기업 부도 위험이 크게 높지 않은 상태예요. 시장 전반은 비교적 안정적인 흐름을 보이고 있어요.',
+      ...buildDetailBox(
+        '하이일드 스프레드',
+        `출처: FRED | BAMLH0A0HYM2 ${formatNumber(spread)}%p`,
+        `실제 값: ${formatNumber(spread)}%p`,
+      ),
+      value: `${formatNumber(spread)}%p`,
+    }
+  }
+
+  if (spread < 7) {
+    return {
+      guide: '위험한 회사채 금리가 국채보다 얼마나 더 비싼지 보면 시장 긴장을 알 수 있어요.',
+      key: 'creditSpread',
+      label: '하이일드 스프레드',
+      status: 'neutral',
+      summary: '기업 신용에 대한 불안이 조금씩 반영되고 있어요. 시장 변동성이 커질 수 있는 구간이에요.',
+      ...buildDetailBox(
+        '하이일드 스프레드',
+        `출처: FRED | BAMLH0A0HYM2 ${formatNumber(spread)}%p`,
+        `실제 값: ${formatNumber(spread)}%p`,
+      ),
+      value: `${formatNumber(spread)}%p`,
+    }
+  }
+
+  if (spread < 10) {
+    return {
+      guide: '위험한 회사채 금리가 국채보다 얼마나 더 비싼지 보면 시장 긴장을 알 수 있어요.',
+      key: 'creditSpread',
+      label: '하이일드 스프레드',
+      status: 'negative',
+      summary: '기업 부도 위험이 높아지고 있는 상태예요. 시장 리스크를 우선적으로 관리하는 것이 중요해요.',
+      ...buildDetailBox(
+        '하이일드 스프레드',
+        `출처: FRED | BAMLH0A0HYM2 ${formatNumber(spread)}%p`,
+        `실제 값: ${formatNumber(spread)}%p`,
+      ),
+      value: `${formatNumber(spread)}%p`,
+    }
+  }
+
   return {
     guide: '위험한 회사채 금리가 국채보다 얼마나 더 비싼지 보면 시장 긴장을 알 수 있어요.',
     key: 'creditSpread',
     label: '하이일드 스프레드',
-    status: 'neutral',
-    summary: '기업 부도 위험이 크게 높지 않은 상태예요. 시장 전반은 비교적 안정적인 흐름을 보이고 있어요.',
+    status: 'negative',
+    summary: '기업 신용 위험이 크게 확대된 상태예요. 시장이 위기 상황을 반영하고 있어요. 지금은 기회보다 리스크 관리가 중요한 구간이에요.',
     ...buildDetailBox(
       '하이일드 스프레드',
       `출처: FRED | BAMLH0A0HYM2 ${formatNumber(spread)}%p`,
@@ -411,17 +467,29 @@ function buildM2Indicator(yearOverYear: number | null): MarketIndicator {
     }
   }
 
-  if (yearOverYear >= 2) {
+  if (yearOverYear < 3) {
+    return {
+      guide: '시중 돈이 늘면 주식시장에 들어올 유동성도 늘 수 있어요.',
+      key: 'm2',
+      label: 'M2 증가율',
+      status: 'neutral',
+      summary: '유동성 증가가 둔화된 상태예요. 시장에 자금 유입이 제한적이에요. 상승 동력이 약해질 수 있어요.',
+      ...buildDetailBox(
+        'M2 증가율 (YoY)',
+        `출처: FRED | M2SL 전년동월 대비 ${formatSignedNumber(yearOverYear)}%`,
+        `실제 값: ${formatSignedNumber(yearOverYear)}%`,
+      ),
+      value: `${formatSignedNumber(yearOverYear)}%`,
+    }
+  }
+
+  if (yearOverYear < 7) {
     return {
       guide: '시중 돈이 늘면 주식시장에 들어올 유동성도 늘 수 있어요.',
       key: 'm2',
       label: 'M2 증가율',
       status: 'positive',
-      summary: yearOverYear >= 12
-        ? '유동성이 과도하게 증가한 상태예요. 시장에 자금이 많이 풀린 구간이에요. 장기적으로는 인플레이션 부담도 함께 고려해야 해요.'
-        : yearOverYear >= 7
-          ? '시장에 돈이 비교적 충분히 공급되고 있어요. 위험자산에 우호적인 환경이에요.'
-          : '시중 유동성이 안정적인 수준이에요. 시장에 특별한 부담이나 과열 신호는 없어요.',
+      summary: '시중 유동성이 안정적인 수준이에요. 시장에 특별한 부담이나 과열 신호는 없어요.',
       ...buildDetailBox(
         'M2 증가율 (YoY)',
         `출처: FRED | M2SL 전년동월 대비 ${formatSignedNumber(yearOverYear)}%`,
@@ -435,8 +503,10 @@ function buildM2Indicator(yearOverYear: number | null): MarketIndicator {
     guide: '시중 돈이 늘면 주식시장에 들어올 유동성도 늘 수 있어요.',
     key: 'm2',
     label: 'M2 증가율',
-    status: 'neutral',
-    summary: '유동성 증가가 둔화된 상태예요. 시장에 자금 유입이 제한적이에요. 상승 동력이 약해질 수 있어요.',
+    status: 'positive',
+    summary: yearOverYear < 12
+      ? '시장에 돈이 비교적 충분히 공급되고 있어요. 위험자산에 우호적인 환경이에요.'
+      : '유동성이 과도하게 증가한 상태예요. 시장에 자금이 많이 풀린 구간이에요. 장기적으로는 인플레이션 부담도 함께 고려해야 해요.',
     ...buildDetailBox(
       'M2 증가율 (YoY)',
       `출처: FRED | M2SL 전년동월 대비 ${formatSignedNumber(yearOverYear)}%`,
@@ -455,15 +525,13 @@ function buildFearGreedIndicator(snapshot: FearGreedSnapshot | null): MarketIndi
     )
   }
 
-  if (snapshot.score <= 40) {
+  if (snapshot.score < 20) {
     return {
       guide: '시장 참여자들이 공격적인지 방어적인지 보여주는 심리 지표예요.',
       key: 'fearGreed',
       label: 'Fear&Greed',
       status: 'negative',
-      summary: snapshot.score <= 20
-        ? '투자자들이 많이 위축된 상태예요. 시장에 대한 불안이 큰 구간이에요. 이런 시기에는 단기 변동성이 크지만, 장기적으로는 기회가 생기기도 해요.'
-        : '투자자들이 조심스럽게 움직이고 있어요. 시장에 대한 불안이 남아 있는 상태예요. 지금은 서두르기보다 천천히 접근하는 전략이 어울려요.',
+      summary: '투자자들이 많이 위축된 상태예요. 시장에 대한 불안이 큰 구간이에요. 이런 시기에는 단기 변동성이 크지만, 장기적으로는 기회가 생기기도 해요.',
       ...buildDetailBox(
         'Fear & Greed Index',
         `출처: onoff.markets | ${snapshot.label} ${formatNumber(snapshot.score)}`,
@@ -473,15 +541,45 @@ function buildFearGreedIndicator(snapshot: FearGreedSnapshot | null): MarketIndi
     }
   }
 
-  if (snapshot.score >= 60) {
+  if (snapshot.score < 40) {
+    return {
+      guide: '시장 참여자들이 공격적인지 방어적인지 보여주는 심리 지표예요.',
+      key: 'fearGreed',
+      label: 'Fear&Greed',
+      status: 'negative',
+      summary: '투자자들이 조심스럽게 움직이고 있어요. 시장에 대한 불안이 남아 있는 상태예요. 지금은 서두르기보다 천천히 접근하는 전략이 어울려요.',
+      ...buildDetailBox(
+        'Fear & Greed Index',
+        `출처: onoff.markets | ${snapshot.label} ${formatNumber(snapshot.score)}`,
+        `실제 값: ${snapshot.label} ${formatNumber(snapshot.score)}`,
+      ),
+      value: `${snapshot.label} ${formatNumber(snapshot.score)}`,
+    }
+  }
+
+  if (snapshot.score < 60) {
+    return {
+      guide: '시장 참여자들이 공격적인지 방어적인지 보여주는 심리 지표예요.',
+      key: 'fearGreed',
+      label: 'Fear&Greed',
+      status: 'neutral',
+      summary: '투자 심리가 크게 치우치지 않은 상태예요. 낙관도 비관도 강하지 않아요. 이런 구간에서는 종목별 흐름이 더 중요해요.',
+      ...buildDetailBox(
+        'Fear & Greed Index',
+        `출처: onoff.markets | ${snapshot.label} ${formatNumber(snapshot.score)}`,
+        `실제 값: ${snapshot.label} ${formatNumber(snapshot.score)}`,
+      ),
+      value: `${snapshot.label} ${formatNumber(snapshot.score)}`,
+    }
+  }
+
+  if (snapshot.score < 80) {
     return {
       guide: '시장 참여자들이 공격적인지 방어적인지 보여주는 심리 지표예요.',
       key: 'fearGreed',
       label: 'Fear&Greed',
       status: 'positive',
-      summary: snapshot.score >= 80
-        ? '투자자들이 과하게 낙관적인 상태예요. 시장이 많이 달아오른 구간이에요. 이런 시기에는 추격 매수보다 과열 여부를 꼭 점검해야 해요.'
-        : '투자자들이 점점 낙관적으로 바뀌고 있어요. 시장에 기대감이 커지고 있어요. 너무 빠르게 오른 종목은 단기 부담을 함께 확인하는 게 좋아요.',
+      summary: '투자자들이 점점 낙관적으로 바뀌고 있어요. 시장에 기대감이 커지고 있어요. 너무 빠르게 오른 종목은 단기 부담을 함께 확인하는 게 좋아요.',
       ...buildDetailBox(
         'Fear & Greed Index',
         `출처: onoff.markets | ${snapshot.label} ${formatNumber(snapshot.score)}`,
@@ -495,8 +593,8 @@ function buildFearGreedIndicator(snapshot: FearGreedSnapshot | null): MarketIndi
     guide: '시장 참여자들이 공격적인지 방어적인지 보여주는 심리 지표예요.',
     key: 'fearGreed',
     label: 'Fear&Greed',
-    status: 'neutral',
-    summary: '투자 심리가 크게 치우치지 않은 상태예요. 낙관도 비관도 강하지 않아요. 이런 구간에서는 종목별 흐름이 더 중요해요.',
+    status: 'positive',
+    summary: '투자자들이 과하게 낙관적인 상태예요. 시장이 많이 달아오른 구간이에요. 이런 시기에는 추격 매수보다 과열 여부를 꼭 점검해야 해요.',
     ...buildDetailBox(
       'Fear & Greed Index',
       `출처: onoff.markets | ${snapshot.label} ${formatNumber(snapshot.score)}`,
@@ -519,7 +617,7 @@ function buildEquityRiskPremiumIndicator(
     )
   }
 
-  if (equityRiskPremium < 0) {
+  if (equityRiskPremium < 1) {
     return {
       guide: '주식 기대수익이 채권보다 얼마나 더 매력적인지 보는 값이에요.',
       key: 'erp',
@@ -535,17 +633,45 @@ function buildEquityRiskPremiumIndicator(
     }
   }
 
-  if (equityRiskPremium >= 2.5) {
+  if (equityRiskPremium < 2.5) {
+    return {
+      guide: '주식 기대수익이 채권보다 얼마나 더 매력적인지 보는 값이에요.',
+      key: 'erp',
+      label: 'ERP',
+      status: 'neutral',
+      summary: '주식의 상대 매력도가 다소 낮은 상태예요. 가격 부담을 함께 고려하면서 투자하는 게 좋아요.',
+      ...buildDetailBox(
+        'ERP (주식−채권 상대매력)',
+        buildErpSourceLine(peRatio, treasury10YearRate, equityRiskPremium),
+        `실제 값: ${formatSignedNumber(equityRiskPremium)}%p`,
+      ),
+      value: `${formatSignedNumber(equityRiskPremium)}%p`,
+    }
+  }
+
+  if (equityRiskPremium < 4) {
+    return {
+      guide: '주식 기대수익이 채권보다 얼마나 더 매력적인지 보는 값이에요.',
+      key: 'erp',
+      label: 'ERP',
+      status: 'neutral',
+      summary: '주식과 채권의 매력도가 크게 차이나지 않는 구간이에요. 종목 선택이 중요한 시기예요.',
+      ...buildDetailBox(
+        'ERP (주식−채권 상대매력)',
+        buildErpSourceLine(peRatio, treasury10YearRate, equityRiskPremium),
+        `실제 값: ${formatSignedNumber(equityRiskPremium)}%p`,
+      ),
+      value: `${formatSignedNumber(equityRiskPremium)}%p`,
+    }
+  }
+
+  if (equityRiskPremium < 6) {
     return {
       guide: '주식 기대수익이 채권보다 얼마나 더 매력적인지 보는 값이에요.',
       key: 'erp',
       label: 'ERP',
       status: 'positive',
-      summary: equityRiskPremium >= 6
-        ? '주식의 기대 수익이 크게 높은 구간이에요. 시장이 리스크를 반영하고 있을 수 있어요. 기회가 있을 수 있지만, 리스크도 함께 확인하는 게 중요해요.'
-        : equityRiskPremium >= 4
-          ? '주식이 채권보다 더 높은 보상을 기대할 수 있는 구간이에요. 분할로 접근해볼 수 있는 환경이에요.'
-          : '주식과 채권의 매력도가 크게 차이나지 않는 구간이에요. 종목 선택이 중요한 시기예요.',
+      summary: '주식이 채권보다 더 높은 보상을 기대할 수 있는 구간이에요. 분할로 접근해볼 수 있는 환경이에요.',
       ...buildDetailBox(
         'ERP (주식−채권 상대매력)',
         buildErpSourceLine(peRatio, treasury10YearRate, equityRiskPremium),
@@ -559,10 +685,8 @@ function buildEquityRiskPremiumIndicator(
     guide: '주식 기대수익이 채권보다 얼마나 더 매력적인지 보는 값이에요.',
     key: 'erp',
     label: 'ERP',
-    status: 'neutral',
-    summary: equityRiskPremium < 1
-      ? '주식이 채권이나 예금 대비 충분히 매력적이지 않은 구간이에요. 지금은 무리하게 주식 비중을 늘리기보다 신중한 접근이 좋아요.'
-      : '주식의 상대 매력도가 다소 낮은 상태예요. 가격 부담을 함께 고려하면서 투자하는 게 좋아요.',
+    status: 'positive',
+    summary: '주식의 기대 수익이 크게 높은 구간이에요. 시장이 리스크를 반영하고 있을 수 있어요. 기회가 있을 수 있지만, 리스크도 함께 확인하는 게 중요해요.',
     ...buildDetailBox(
       'ERP (주식−채권 상대매력)',
       buildErpSourceLine(peRatio, treasury10YearRate, equityRiskPremium),
