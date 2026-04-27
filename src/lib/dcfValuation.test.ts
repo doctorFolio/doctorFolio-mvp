@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { calculateDcfValuation, type DcfInput, type FinancialLineItem, type FinancialMetric } from './dcfValuation'
+import {
+  calculateDcfValuation,
+  computeProjectedEbitSeries,
+  computeProjectedFcffFromEbit,
+  type DcfInput,
+  type FinancialLineItem,
+  type FinancialMetric,
+} from './dcfValuation'
 
 function makeMetric(overrides: FinancialMetric = {}): FinancialMetric {
   return {
@@ -69,11 +76,11 @@ describe('calculateDcfValuation', () => {
     }))).toBeNull()
   })
 
-  it('returns null when base fcff is not positive', () => {
+  it('returns null when base ebit is not positive', () => {
     expect(calculateDcfValuation(makeInput({
       lineItems: [
         makeLineItem({
-          ebit: 10,
+          ebit: 0,
           depreciationAndAmortization: 0,
           capitalExpenditure: -100,
           workingCapital: 180,
@@ -113,6 +120,23 @@ describe('calculateDcfValuation', () => {
 
     expect(result).not.toBeNull()
     expect(result!.assumptions.baseFcff).toBe(155)
+  })
+
+  it('allows negative base fcff when base ebit is still positive', () => {
+    const result = calculateDcfValuation(makeInput({
+      lineItems: [
+        makeLineItem({
+          ebit: 10,
+          depreciationAndAmortization: 0,
+          capitalExpenditure: -100,
+          workingCapital: 180,
+        }),
+        makeLineItem({ workingCapital: 90 }),
+      ],
+    }))
+
+    expect(result).not.toBeNull()
+    expect(result!.assumptions.baseFcff).toBeCloseTo(-182.1, 5)
   })
 
   it('marks delta working capital unavailable when only one period exists', () => {
@@ -221,6 +245,14 @@ describe('calculateDcfValuation', () => {
 
     expect(result).not.toBeNull()
     expect(result!.marginOfSafety).toBeGreaterThan(0)
+    expect(result!.projections).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          year: 1,
+          source: 'model',
+        }),
+      ]),
+    )
   })
 
   it('returns negative margin of safety for overvalued case', () => {
@@ -230,5 +262,36 @@ describe('calculateDcfValuation', () => {
 
     expect(result).not.toBeNull()
     expect(result!.marginOfSafety).toBeLessThan(0)
+  })
+})
+
+describe('computeProjectedEbitSeries', () => {
+  it('interpolates growth from base growth to terminal growth', () => {
+    const result = computeProjectedEbitSeries(100, 0.1, 0.02, 3)
+
+    expect(result).toHaveLength(3)
+    expect(result[0]).toEqual({ year: 1, ebit: 110.00000000000001, growth: 0.1, source: 'model' })
+    expect(result[1]).toMatchObject({ year: 2, source: 'model' })
+    expect(result[1].growth).toBeCloseTo(0.06, 10)
+    expect(result[1].ebit).toBeCloseTo(116.60000000000002, 10)
+    expect(result[2]).toMatchObject({ year: 3, source: 'model' })
+    expect(result[2].growth).toBeCloseTo(0.02, 10)
+    expect(result[2].ebit).toBeCloseTo(118.93200000000002, 10)
+  })
+
+  it('uses consensus ebit values when they are available', () => {
+    expect(computeProjectedEbitSeries(100, 0.08, 0.03, 3, [
+      { year: 2, ebit: 120 },
+    ])).toEqual([
+      { year: 1, ebit: 108, growth: 0.08, source: 'model' },
+      { year: 2, ebit: 120, growth: 0.11111111111111116, source: 'consensus' },
+      { year: 3, ebit: 123.60000000000001, growth: 0.03, source: 'model' },
+    ])
+  })
+})
+
+describe('computeProjectedFcffFromEbit', () => {
+  it('derives fcff from ebit and reinvestment inputs', () => {
+    expect(computeProjectedFcffFromEbit(100, 0.21, 10, 20, 5)).toBeCloseTo(64, 5)
   })
 })
