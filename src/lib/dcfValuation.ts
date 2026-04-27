@@ -79,7 +79,7 @@ export interface DcfResult {
   }
   projections: Array<{
     year: number
-    ebit: number
+    ebit: number | null
     growth: number
     fcff: number
     presentValue: number
@@ -252,7 +252,7 @@ function buildProjections(input: {
 
       return {
         year,
-        ebit: projectedFcff,
+        ebit: null,
         growth,
         fcff: projectedFcff,
         presentValue: projectedFcff / Math.pow(1 + input.wacc, year),

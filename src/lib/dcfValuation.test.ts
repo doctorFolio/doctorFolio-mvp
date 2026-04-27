@@ -120,6 +120,31 @@ describe('calculateDcfValuation', () => {
 
     expect(result).not.toBeNull()
     expect(result!.assumptions.baseFcff).toBe(155)
+    expect(result!.projections[0]?.ebit).toBeNull()
+  })
+
+  it('keeps zero free cash flow fallback projections valid and marks ebit unavailable', () => {
+    const result = calculateDcfValuation(makeInput({
+      lineItems: [
+        makeLineItem({
+          ebit: undefined,
+          freeCashFlow: 0,
+          totalDebt: 0,
+          cashAndEquivalents: 0,
+        }),
+        makeLineItem({
+          ebit: undefined,
+          freeCashFlow: 0,
+          totalDebt: 0,
+          cashAndEquivalents: 0,
+        }),
+      ],
+    }))
+
+    expect(result).not.toBeNull()
+    expect(result!.assumptions.baseFcff).toBe(0)
+    expect(result!.enterpriseValue).toBe(0)
+    expect(result!.projections.every(projection => projection.ebit === null && projection.fcff === 0)).toBe(true)
   })
 
   it('allows negative base fcff when base ebit is still positive', () => {
@@ -270,7 +295,9 @@ describe('computeProjectedEbitSeries', () => {
     const result = computeProjectedEbitSeries(100, 0.1, 0.02, 3)
 
     expect(result).toHaveLength(3)
-    expect(result[0]).toEqual({ year: 1, ebit: 110.00000000000001, growth: 0.1, source: 'model' })
+    expect(result[0]).toMatchObject({ year: 1, source: 'model' })
+    expect(result[0].growth).toBeCloseTo(0.1, 10)
+    expect(result[0].ebit).toBeCloseTo(110.00000000000001, 10)
     expect(result[1]).toMatchObject({ year: 2, source: 'model' })
     expect(result[1].growth).toBeCloseTo(0.06, 10)
     expect(result[1].ebit).toBeCloseTo(116.60000000000002, 10)
@@ -280,13 +307,19 @@ describe('computeProjectedEbitSeries', () => {
   })
 
   it('uses consensus ebit values when they are available', () => {
-    expect(computeProjectedEbitSeries(100, 0.08, 0.03, 3, [
+    const result = computeProjectedEbitSeries(100, 0.08, 0.03, 3, [
       { year: 2, ebit: 120 },
-    ])).toEqual([
-      { year: 1, ebit: 108, growth: 0.08, source: 'model' },
-      { year: 2, ebit: 120, growth: 0.11111111111111116, source: 'consensus' },
-      { year: 3, ebit: 123.60000000000001, growth: 0.03, source: 'model' },
     ])
+
+    expect(result).toHaveLength(3)
+    expect(result[0]).toMatchObject({ year: 1, source: 'model' })
+    expect(result[0].growth).toBeCloseTo(0.08, 10)
+    expect(result[0].ebit).toBeCloseTo(108, 10)
+    expect(result[1]).toMatchObject({ year: 2, ebit: 120, source: 'consensus' })
+    expect(result[1].growth).toBeCloseTo(0.11111111111111116, 10)
+    expect(result[2]).toMatchObject({ year: 3, source: 'model' })
+    expect(result[2].growth).toBeCloseTo(0.03, 10)
+    expect(result[2].ebit).toBeCloseTo(123.60000000000001, 10)
   })
 })
 
