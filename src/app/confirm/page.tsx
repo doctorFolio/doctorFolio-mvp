@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import { ConfirmCard } from '@/components/ConfirmCard'
 import { SESSION_KEYS } from '@/lib/types'
 import type { PortfolioPosition, AssetClass } from '@/lib/types'
-import styles from './page.module.css'
+import { tailwindStyles as styles } from '@/lib/tailwindStyles'
 
 const CASH_POSITION_ID = 'manual-cash-position'
 const DESKTOP_MEDIA_QUERY = '(min-width: 768px)'

@@ -2,7 +2,7 @@
 // src/components/ActionItem.tsx
 import { useState } from 'react'
 import type { Action } from '@/lib/types'
-import styles from './ActionItem.module.css'
+import { tailwindStyles as styles } from '@/lib/tailwindStyles'
 
 interface Props { action: Action }
 

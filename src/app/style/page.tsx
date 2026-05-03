@@ -5,7 +5,7 @@ import { runDiagnosis } from '@/lib/engine'
 import { PRESETS, QUIZ_QUESTIONS, inferStyleKey, scoreToStyleKey } from '@/lib/investorProfile'
 import { DEFAULT_TARGET, SESSION_KEYS } from '@/lib/types'
 import type { StyleKey, PortfolioPosition, TargetAllocation } from '@/lib/types'
-import styles from './page.module.css'
+import { tailwindStyles as styles } from '@/lib/tailwindStyles'
 
 const STYLE_KEYS: StyleKey[] = ['stable', 'balanced', 'growth', 'aggressive']
 const TARGET_FIELDS: Array<keyof TargetAllocation> = ['국내주식', '해외주식', '채권', '현금']

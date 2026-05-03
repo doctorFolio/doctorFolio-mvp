@@ -6,7 +6,7 @@ import { ConfirmCard } from '@/components/ConfirmCard'
 import { SECTOR_LABELS } from '@/lib/sectors'
 import type { AssetClass, PortfolioPosition } from '@/lib/types'
 import { EMPTY_DRAFT, createManualPosition, isManualDraftComplete } from './manualPosition'
-import styles from './page.module.css'
+import { tailwindStyles as styles } from '@/lib/tailwindStyles'
 
 const ASSET_CLASSES = ['국내주식', '해외주식', '채권', '기타'] as const
 

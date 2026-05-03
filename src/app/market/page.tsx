@@ -6,7 +6,7 @@ import { MarketCard } from '@/components/MarketCard'
 import { buildMarketInsight } from '@/lib/marketInsightTemplates'
 import type { MarketResponse } from '@/lib/marketSignals'
 import { loadMarketSignals } from '@/lib/marketSignalsClient'
-import styles from './page.module.css'
+import { tailwindStyles as styles } from '@/lib/tailwindStyles'
 
 const SKELETON_COUNT = 5
 const INDICATOR_ORDER = ['fearGreed', 'yieldCurve', 'erp', 'creditSpread', 'm2'] as const

@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { formatMacroStateLabel, type MarketResponse } from '@/lib/marketSignals'
-import styles from './MarketBanner.module.css'
+import { tailwindStyles as styles } from '@/lib/tailwindStyles'
 
 interface MarketBannerProps {
   error?: string | null

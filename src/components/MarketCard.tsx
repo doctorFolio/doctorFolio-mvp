@@ -3,7 +3,7 @@
 import type { JSX } from 'react'
 import { useState } from 'react'
 import type { MarketIndicator, MarketIndicatorStatus } from '@/lib/marketSignals'
-import styles from './MarketCard.module.css'
+import { tailwindStyles as styles } from '@/lib/tailwindStyles'
 
 interface MarketCardProps {
   indicator: MarketIndicator

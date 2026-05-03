@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import type { PortfolioPosition, AssetClass } from '@/lib/types'
 import { SECTOR_LABELS } from '@/lib/sectors'
-import styles from './ConfirmCard.module.css'
+import { tailwindStyles as styles } from '@/lib/tailwindStyles'
 
 type EditableField = 'value' | 'avgCost' | 'currentPrice'
 

@@ -1,6 +1,6 @@
 // src/components/AllocationBar.tsx
 import type { AllocationBucket, TargetAllocation } from '@/lib/types'
-import styles from './AllocationBar.module.css'
+import { tailwindStyles as styles } from '@/lib/tailwindStyles'
 
 interface Props {
   current: Record<AllocationBucket, number>

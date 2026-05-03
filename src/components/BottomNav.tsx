@@ -3,7 +3,7 @@
 import type { ReactNode } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import styles from './BottomNav.module.css'
+import { tailwindStyles as styles } from '@/lib/tailwindStyles'
 
 type NavItem = {
   href: string
