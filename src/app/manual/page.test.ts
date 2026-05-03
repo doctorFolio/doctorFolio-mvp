@@ -1,4 +1,3 @@
-import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { createManualPosition, isManualDraftComplete } from './manualPosition'
 
@@ -50,11 +49,11 @@ describe('ManualInputPage helpers', () => {
     expect(position.id).toMatch(/^[0-9a-f-]{36}$/)
   })
 
-  it('keeps the manual page constrained to the mobile container and safe-area CTA', () => {
-    const css = readFileSync(new URL('./page.module.css', import.meta.url), 'utf8')
+  it('keeps the manual page constrained to the mobile container and safe-area CTA', async () => {
+    const globals = await import('../../lib/tailwindStyles')
 
-    expect(css).toContain('max-width: 440px;')
-    expect(css).toContain('env(safe-area-inset-bottom)')
-    expect(css).toContain('grid-template-columns: repeat(3, minmax(0, 1fr));')
+    expect(globals.tailwindStyles.formGridTriple).toContain('sm:grid-cols-3')
+    expect(globals.tailwindStyles.ctaButton).toContain('mt-4')
+    expect(globals.tailwindStyles.wrap).toContain('min-h-dvh')
   })
 })

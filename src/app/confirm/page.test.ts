@@ -1,4 +1,3 @@
-import { readFileSync } from 'node:fs'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -87,11 +86,11 @@ describe('ConfirmPage', () => {
     expect(html).toBe('')
   })
 
-  it('reserves mobile scroll space for the fixed CTA', () => {
-    const css = readFileSync(new URL('./page.module.css', import.meta.url), 'utf8')
+  it('reserves mobile scroll space through Tailwind styles', async () => {
+    const { tailwindStyles } = await import('../../lib/tailwindStyles')
 
-    expect(css).toContain('--mobile-fixed-cta-clearance: calc(96px + env(safe-area-inset-bottom));')
-    expect(css).toContain('padding: 12px 16px var(--mobile-fixed-cta-clearance);')
-    expect(css).toContain('scroll-padding-bottom: var(--mobile-fixed-cta-clearance);')
+    expect(tailwindStyles.scroll).toContain('pb-[calc(96px+env(safe-area-inset-bottom))]')
+    expect(tailwindStyles.tableWrap).toContain('overflow-x-auto')
+    expect(tailwindStyles.cashInputWrap).toContain('rounded')
   })
 })

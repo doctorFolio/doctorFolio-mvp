@@ -12,11 +12,11 @@ describe('DiagnosisPage source', () => {
     expect(source).toContain('다시 진단')
   })
 
-  it('uses the diagnosis page styles that keep the navy header and allocation panel', () => {
-    const css = readFileSync(new URL('./page.module.css', import.meta.url), 'utf8')
+  it('uses Tailwind styles that keep the navy header and allocation panel', async () => {
+    const { tailwindStyles } = await import('../../lib/tailwindStyles')
 
-    expect(css).toContain('.allocationPanel')
-    expect(css).toContain('.retryBtn')
-    expect(css).toContain('.healthScoreDot')
+    expect(tailwindStyles.allocationPanel).toContain('rounded')
+    expect(tailwindStyles.retryBtn).toContain('rounded')
+    expect(tailwindStyles.healthScoreDot).toContain('rounded')
   })
 })
