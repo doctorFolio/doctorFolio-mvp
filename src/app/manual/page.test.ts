@@ -50,10 +50,10 @@ describe('ManualInputPage helpers', () => {
   })
 
   it('keeps the manual page constrained to the mobile container and safe-area CTA', async () => {
-    const globals = await import('../../lib/tailwindStyles')
+    const { manualPageStyles } = await import('../../lib/legacyStyleMaps')
 
-    expect(globals.tailwindStyles.formGridTriple).toContain('sm:grid-cols-3')
-    expect(globals.tailwindStyles.ctaButton).toContain('mt-4')
-    expect(globals.tailwindStyles.wrap).toContain('min-h-dvh')
+    expect(manualPageStyles.formGridTriple).toBe('manualPage__formGridTriple')
+    expect(manualPageStyles.ctaButton).toBe('manualPage__ctaButton')
+    expect(manualPageStyles.wrap).toBe('manualPage__wrap')
   })
 })

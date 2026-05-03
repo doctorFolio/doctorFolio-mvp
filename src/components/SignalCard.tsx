@@ -7,7 +7,7 @@ import type {
   TradingSignal,
   TradingSignalMetric,
 } from '@/lib/tradingSignals'
-import { tailwindStyles as styles } from '@/lib/tailwindStyles'
+import { signalCardStyles as styles } from '@/lib/legacyStyleMaps'
 
 interface SignalCardProps {
   sector?: string

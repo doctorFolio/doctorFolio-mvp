@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import type { AllocationBucket, TargetAllocation } from '@/lib/types'
-import { tailwindStyles as styles } from '@/lib/tailwindStyles'
+import { improvementSheetStyles as styles } from '@/lib/legacyStyleMaps'
 
 const ROWS: AllocationBucket[] = ['국내주식', '해외주식', '채권', '현금', '기타']
 

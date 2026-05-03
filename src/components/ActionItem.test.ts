@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest'
 import { ActionItem } from './ActionItem'
 
 describe('ActionItem', () => {
-  it('renders a sell action with Tailwind utility classes', () => {
+  it('renders a sell action with migrated style classes', () => {
     const html = renderToStaticMarkup(
       createElement(ActionItem, {
         action: {
@@ -20,6 +20,6 @@ describe('ActionItem', () => {
 
     expect(html).toContain('삼성전자')
     expect(html).toContain('매도 2주')
-    expect(html).toContain('rounded')
+    expect(html).toContain('actionItem__item')
   })
 })

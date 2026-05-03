@@ -7,7 +7,7 @@ import { SignalCard } from '@/components/SignalCard'
 import { listSignalTargets, loadTradingSignals } from '@/lib/tradingSignalsClient'
 import { SESSION_KEYS, type PortfolioPosition } from '@/lib/types'
 import type { TradingSignal } from '@/lib/tradingSignals'
-import { tailwindStyles as styles } from '@/lib/tailwindStyles'
+import { signalsPageStyles as styles } from '@/lib/legacyStyleMaps'
 
 function readConfirmedPositions(): PortfolioPosition[] {
   if (typeof window === 'undefined') return []

@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react'
 import type { SectorAllocationSlice } from '@/lib/sectorAllocation'
-import { tailwindStyles as styles } from '@/lib/tailwindStyles'
+import { sectorPieChartStyles as styles } from '@/lib/legacyStyleMaps'
 
 const SLICE_COLORS = ['#1C2B5E', '#E8A838', '#23B26D', '#E24D4D', '#9B8FD4']
 

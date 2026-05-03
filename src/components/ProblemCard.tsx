@@ -1,6 +1,6 @@
 // src/components/ProblemCard.tsx
 import type { Problem } from '@/lib/types'
-import { tailwindStyles as styles } from '@/lib/tailwindStyles'
+import { problemCardStyles as styles } from '@/lib/legacyStyleMaps'
 
 interface Props {
   problem: Problem

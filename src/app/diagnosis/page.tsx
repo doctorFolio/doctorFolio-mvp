@@ -22,7 +22,7 @@ import type {
   PortfolioPosition,
   StyleKey,
 } from '@/lib/types'
-import { tailwindStyles as styles } from '@/lib/tailwindStyles'
+import { diagnosisPageStyles as styles } from '@/lib/legacyStyleMaps'
 
 const STYLE_KEYS: StyleKey[] = ['stable', 'balanced', 'growth', 'aggressive']
 

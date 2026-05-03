@@ -86,11 +86,11 @@ describe('ConfirmPage', () => {
     expect(html).toBe('')
   })
 
-  it('reserves mobile scroll space through Tailwind styles', async () => {
-    const { tailwindStyles } = await import('../../lib/tailwindStyles')
+  it('reserves mobile scroll space through migrated styles', async () => {
+    const { confirmPageStyles } = await import('../../lib/legacyStyleMaps')
 
-    expect(tailwindStyles.scroll).toContain('pb-[calc(96px+env(safe-area-inset-bottom))]')
-    expect(tailwindStyles.tableWrap).toContain('overflow-x-auto')
-    expect(tailwindStyles.cashInputWrap).toContain('rounded')
+    expect(confirmPageStyles.scroll).toBe('confirmPage__scroll')
+    expect(confirmPageStyles.tableWrap).toBe('confirmPage__tableWrap')
+    expect(confirmPageStyles.cashInputWrap).toBe('confirmPage__cashInputWrap')
   })
 })

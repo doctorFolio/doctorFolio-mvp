@@ -17,7 +17,7 @@ const position = {
 }
 
 describe('ConfirmCard', () => {
-  it('renders editable position fields with Tailwind utility classes', () => {
+  it('renders editable position fields with migrated style classes', () => {
     const html = renderToStaticMarkup(
       createElement(ConfirmCard, {
         asRow: false,
@@ -34,6 +34,6 @@ describe('ConfirmCard', () => {
     expect(html).toContain('삼성전자')
     expect(html).toContain('42.5%')
     expect(html).toContain('중복')
-    expect(html).toContain('rounded')
+    expect(html).toContain('confirmCard__card')
   })
 })

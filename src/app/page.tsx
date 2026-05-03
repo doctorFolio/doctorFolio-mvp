@@ -5,7 +5,7 @@ import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { SESSION_KEYS } from '@/lib/types'
 import { parseOcrErrorResponse } from '@/lib/ocr'
-import { tailwindStyles as styles } from '@/lib/tailwindStyles'
+import { uploadPageStyles as styles } from '@/lib/legacyStyleMaps'
 
 type LoadingStep = { name: string; done: boolean; active: boolean }
 

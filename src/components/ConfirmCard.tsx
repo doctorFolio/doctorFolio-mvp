@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import type { PortfolioPosition, AssetClass } from '@/lib/types'
 import { SECTOR_LABELS } from '@/lib/sectors'
-import { tailwindStyles as styles } from '@/lib/tailwindStyles'
+import { confirmCardStyles as styles } from '@/lib/legacyStyleMaps'
 
 type EditableField = 'value' | 'avgCost' | 'currentPrice'
 
