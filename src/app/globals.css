@@ -1,5 +1,9 @@
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css');
 
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
   --navy:         #1C2B5E;
   --navy-dark:    #16224a;
@@ -29,6 +33,23 @@
   --radius-btn:    12px;
   --radius-badge:  20px;
   --radius-input:  8px;
+  --card: 0 0% 100%;
+  --card-foreground: 221 39% 11%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 221 39% 11%;
+  --primary: 228 54% 24%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 225 47% 94%;
+  --secondary-foreground: 228 54% 24%;
+  --muted: 225 47% 94%;
+  --muted-foreground: 220 9% 46%;
+  --accent: 39 92% 95%;
+  --accent-foreground: 33 100% 36%;
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 100%;
+  --border-token: 224 33% 91%;
+  --input: 224 33% 91%;
+  --ring: 228 54% 24%;
 }
 
 *, *::before, *::after {
